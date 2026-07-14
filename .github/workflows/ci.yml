@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('**/Directory.Packages.props') }}
+
+      - name: Restore
+        run: dotnet restore MediaForge.sln
+
+      - name: Build
+        run: dotnet build MediaForge.sln --no-restore -c Release
+
+      - name: Start infrastructure
+        run: docker compose -f infra/docker-compose.yml up -d
+
+      - name: Wait for infrastructure to become healthy
+        run: sleep 15
+
+      - name: Generate RSA keys for tests
+        run: |
+          mkdir -p src/Services/Identity/API/keys
+          openssl genrsa -out src/Services/Identity/API/keys/private.pem 2048
+          openssl rsa -in src/Services/Identity/API/keys/private.pem -pubout -out src/Services/Identity/API/keys/public.pem
+          mkdir -p src/Services/Media/API/keys
+          cp src/Services/Identity/API/keys/public.pem src/Services/Media/API/keys/public.pem
+
+      - name: Install dotnet-ef
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Add dotnet tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Run EF migrations
+        run: |
+          dotnet ef database update --project src/Services/Identity/Infrastructure --startup-project src/Services/Identity/API --context IdentityDbContext
+          dotnet ef database update --project src/Services/Identity/Infrastructure --startup-project src/Services/Identity/API --context ConfigurationDbContext
+          dotnet ef database update --project src/Services/Identity/Infrastructure --startup-project src/Services/Identity/API --context PersistedGrantDbContext
+          dotnet ef database update --project src/Services/Media/Infrastructure --startup-project src/Services/Media/API --context MediaDbContext
+
+      - name: Run tests
+        run: >
+          dotnet test MediaForge.sln --no-build -c Release --verbosity normal
+          --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: "**/*.trx"
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build all Docker images
+        run: docker compose -f infra/docker-compose.full.yml build
