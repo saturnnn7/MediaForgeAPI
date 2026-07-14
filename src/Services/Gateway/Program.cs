@@ -94,3 +94,5 @@ app.MapReverseProxy();
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "gateway" }));
 
 app.Run();
+
+public partial class Program;

@@ -57,6 +57,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaForge.Media.Integratio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaForge.Search.IntegrationTests", "tests\Search.IntegrationTests\MediaForge.Search.IntegrationTests.csproj", "{7721D4EE-7294-4FBA-8C9D-BAEBA7BB7A0D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaForge.Gateway.IntegrationTests", "tests\Gateway.IntegrationTests\MediaForge.Gateway.IntegrationTests.csproj", "{737E240A-A825-4D39-8B3C-F440D8F5C30A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -142,6 +144,10 @@ Global
 		{7721D4EE-7294-4FBA-8C9D-BAEBA7BB7A0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7721D4EE-7294-4FBA-8C9D-BAEBA7BB7A0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7721D4EE-7294-4FBA-8C9D-BAEBA7BB7A0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{737E240A-A825-4D39-8B3C-F440D8F5C30A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{737E240A-A825-4D39-8B3C-F440D8F5C30A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{737E240A-A825-4D39-8B3C-F440D8F5C30A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{737E240A-A825-4D39-8B3C-F440D8F5C30A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5DE98BF0-2254-40D4-ABD3-3DEB94948E3D} = {2399ED8C-C53C-43FF-AB41-36016CEB96BB}
@@ -169,5 +175,6 @@ Global
 		{A4586913-CF55-4CB0-BD39-185FF203D1FC} = {BA6605C1-7A53-4422-BC68-91B536387EED}
 		{9BC25A1D-8157-4B3F-A3F5-47203B88F40F} = {BA6605C1-7A53-4422-BC68-91B536387EED}
 		{7721D4EE-7294-4FBA-8C9D-BAEBA7BB7A0D} = {BA6605C1-7A53-4422-BC68-91B536387EED}
+		{737E240A-A825-4D39-8B3C-F440D8F5C30A} = {BA6605C1-7A53-4422-BC68-91B536387EED}
 	EndGlobalSection
 EndGlobal
