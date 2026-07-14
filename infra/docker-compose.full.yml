@@ -1,0 +1,210 @@
+name: mediaforge-full
+
+services:
+  # ── Infrastructure ──────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: mf-postgres
+    environment:
+      POSTGRES_USER: mediaforge
+      POSTGRES_PASSWORD: mediaforge_dev
+      POSTGRES_MULTIPLE_DATABASES: identity,media,search
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./pg-init:/docker-entrypoint-initdb.d
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: mf-redis
+    ports: ["6379:6379"]
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: mf-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: mediaforge
+      RABBITMQ_DEFAULT_PASS: mediaforge_dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  minio:
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    container_name: mf-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: mediaforge
+      MINIO_ROOT_PASSWORD: mediaforge_dev_s3cret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  elasticsearch:
+    image: elasticsearch:8.17.6
+    container_name: mf-elasticsearch
+    profiles: ["search"]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports: ["9200:9200"]
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  # ── .NET Services ───────────────────────────────────────────────────
+  identity-api:
+    build:
+      context: ..
+      dockerfile: src/Services/Identity/API/Dockerfile
+    container_name: mf-identity-api
+    ports: ["5001:8080"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__IdentityDb: "Host=postgres;Port=5432;Database=identity;Username=mediaforge;Password=mediaforge_dev"
+      ConnectionStrings__Redis: "redis:6379"
+      ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
+      IdentityServer__IssuerUri: "http://identity-api:8080"
+      Jwt__PrivateKeyPath: "/app/keys/private.pem"
+      Jwt__AccessTokenExpiryMinutes: "15"
+      Jwt__RefreshTokenExpiryDays: "7"
+      RabbitMq__Username: "mediaforge"
+      RabbitMq__Password: "mediaforge_dev"
+      Email__Host: "sandbox.smtp.mailtrap.io"
+      Email__Port: "587"
+      Email__From: "noreply@mediaforge.local"
+    volumes:
+      - ../src/Services/Identity/API/keys:/app/keys:ro
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  media-api:
+    build:
+      context: ..
+      dockerfile: src/Services/Media/API/Dockerfile
+    container_name: mf-media-api
+    ports: ["5002:8080"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__MediaDb: "Host=postgres;Port=5432;Database=media;Username=mediaforge;Password=mediaforge_dev"
+      ConnectionStrings__Redis: "redis:6379"
+      ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
+      IdentityServer__Authority: "http://identity-api:8080"
+      IdentityServer__Audience: "media.read"
+      Grpc__IdentityServiceUrl: "http://identity-api:8080"
+      Storage__ServiceUrl: "http://minio:9000"
+      Storage__AccessKey: "mediaforge"
+      Storage__SecretKey: "mediaforge_dev_s3cret"
+      RabbitMq__Username: "mediaforge"
+      RabbitMq__Password: "mediaforge_dev"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - minio
+      - identity-api
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  processing-worker:
+    build:
+      context: ..
+      dockerfile: src/Services/Processing/Worker/Dockerfile
+    container_name: mf-processing-worker
+    environment:
+      ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
+      Storage__ServiceUrl: "http://minio:9000"
+      Storage__AccessKey: "mediaforge"
+      Storage__SecretKey: "mediaforge_dev_s3cret"
+      OpenAI__ApiKey: ""
+      FFmpeg__BinaryPath: ""
+      RabbitMq__Username: "mediaforge"
+      RabbitMq__Password: "mediaforge_dev"
+    depends_on:
+      - rabbitmq
+      - minio
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  search-api:
+    build:
+      context: ..
+      dockerfile: src/Services/Search/API/Dockerfile
+    container_name: mf-search-api
+    ports: ["5003:8080"]
+    environment:
+      ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
+      IdentityServer__Authority: "http://identity-api:8080"
+      IdentityServer__Audience: "search.read"
+      Search__Provider: "inmemory"
+      RabbitMq__Username: "mediaforge"
+      RabbitMq__Password: "mediaforge_dev"
+    depends_on:
+      - rabbitmq
+      - identity-api
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: src/Services/Gateway/Dockerfile
+    container_name: mf-gateway
+    ports: ["5000:8080"]
+    environment:
+      ConnectionStrings__Redis: "redis:6379"
+      ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
+      IdentityServer__Authority: "http://identity-api:8080"
+      RabbitMq__Username: "mediaforge"
+      RabbitMq__Password: "mediaforge_dev"
+      ReverseProxy__Clusters__identity-cluster__Destinations__identity-api__Address: "http://identity-api:8080"
+      ReverseProxy__Clusters__media-cluster__Destinations__media-api__Address: "http://media-api:8080"
+      ReverseProxy__Clusters__search-cluster__Destinations__search-api__Address: "http://search-api:8080"
+    depends_on:
+      - redis
+      - rabbitmq
+      - identity-api
+      - media-api
+      - search-api
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+volumes:
+  postgres_data:
+  minio_data:
+  es_data:

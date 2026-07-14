@@ -1,0 +1,15 @@
+meta {
+  name: Confirm Upload
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/media/{{assetId}}/confirm-upload
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

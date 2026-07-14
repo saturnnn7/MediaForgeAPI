@@ -1,0 +1,32 @@
+meta {
+  name: Request Upload URL
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/media/upload-url
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "fileName": "test-video.mp4",
+    "contentType": "video/mp4",
+    "fileSizeBytes": 1048576
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("assetId", res.body.assetId);
+    bru.setVar("uploadUrl", res.body.uploadUrl);
+    console.log("Asset ID:", res.body.assetId);
+    console.log("Upload URL:", res.body.uploadUrl);
+  }
+}

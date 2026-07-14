@@ -1,0 +1,10 @@
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Configuration;
+global using MediaForge.Identity.Application.Abstractions;
+global using MediaForge.Identity.Application.Commands.Register;
+global using MediaForge.Identity.Application.Commands.Login;
+global using MediaForge.Identity.Application.Commands.RefreshToken;
+global using MediaForge.Identity.Application.Commands.VerifyEmail;
+global using MediaForge.Shared.Infrastructure.Common;
+global using MediatR;

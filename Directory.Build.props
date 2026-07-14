@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <LangVersion>12</LangVersion>
+    <NoWarn>CA1716;CA1711;CA1848</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Low severity, no fix available yet for the pinned Duende.IdentityServer 7.0.6 -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-v9xq-2mvm-x8xc" />
+  </ItemGroup>
+</Project>

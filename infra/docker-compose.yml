@@ -1,0 +1,79 @@
+name: mediaforge-infra
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mf-postgres
+    environment:
+      POSTGRES_USER: mediaforge
+      POSTGRES_PASSWORD: mediaforge_dev
+      POSTGRES_MULTIPLE_DATABASES: identity,media,search
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./pg-init:/docker-entrypoint-initdb.d
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: mf-redis
+    ports: ["6379:6379"]
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: mf-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: mediaforge
+      RABBITMQ_DEFAULT_PASS: mediaforge_dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  minio:
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    container_name: mf-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: mediaforge
+      MINIO_ROOT_PASSWORD: mediaforge_dev_s3cret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  elasticsearch:
+    image: elasticsearch:8.17.6
+    container_name: mf-elasticsearch
+    profiles: ["search"]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports: ["9200:9200"]
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+volumes:
+  postgres_data:
+  minio_data:
+  es_data:

@@ -1,0 +1,29 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{csproj,props,targets,xml}]
+indent_size = 2
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.cs]
+# C# specific
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+csharp_new_line_before_open_brace = all
+csharp_indent_case_contents = true
+csharp_prefer_braces = true:warning
+
+[**/Migrations/*.cs]
+generated_code = true
+
+[**/Migrations/**/*.cs]
+generated_code = true

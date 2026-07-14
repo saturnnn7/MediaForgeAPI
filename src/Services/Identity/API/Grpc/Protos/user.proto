@@ -1,0 +1,19 @@
+syntax = "proto3";
+option csharp_namespace = "MediaForge.Identity.API.Grpc";
+package identity;
+
+service UserService {
+  rpc GetUserById (GetUserByIdRequest) returns (UserResponse);
+  rpc GetUserByEmail (GetUserByEmailRequest) returns (UserResponse);
+}
+
+message GetUserByIdRequest { string user_id = 1; }
+message GetUserByEmailRequest { string email = 1; }
+message UserResponse {
+  string user_id = 1;
+  string email = 2;
+  string display_name = 3;
+  string avatar_url = 4;
+  bool is_email_verified = 5;
+  bool found = 6;
+}

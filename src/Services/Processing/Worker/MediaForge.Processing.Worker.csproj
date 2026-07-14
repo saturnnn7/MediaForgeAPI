@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-MediaForge.Processing.Worker-279f5472-6866-48f4-8239-3e157ecf8b29</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" />
+    <PackageReference Include="FFMpegCore" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="OpenAI" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Contracts\MediaForge.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Infrastructure\MediaForge.Shared.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

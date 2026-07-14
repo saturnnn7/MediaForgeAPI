@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\MediaForge.Search.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Contracts\MediaForge.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Shared\Infrastructure\MediaForge.Shared.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

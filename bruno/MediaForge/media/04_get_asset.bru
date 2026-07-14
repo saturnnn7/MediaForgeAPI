@@ -1,0 +1,14 @@
+meta {
+  name: Get Asset
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/media/{{assetId}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

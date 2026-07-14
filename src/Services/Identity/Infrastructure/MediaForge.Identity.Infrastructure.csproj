@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Application\MediaForge.Identity.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Duende.IdentityServer" />
+    <PackageReference Include="Duende.IdentityServer.AspNetIdentity" />
+    <PackageReference Include="Duende.IdentityServer.EntityFramework" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
