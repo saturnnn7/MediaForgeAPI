@@ -39,6 +39,14 @@ public sealed class StorageService(IAmazonS3 s3Client) : IStorageService
         return Task.FromResult(url);
     }
 
+    public async Task DownloadToFileAsync(string bucketName, string objectKey, string localPath, CancellationToken ct)
+    {
+        var request = new GetObjectRequest { BucketName = bucketName, Key = objectKey };
+        using var response = await s3Client.GetObjectAsync(request, ct);
+        using var fs = File.Create(localPath);
+        await response.ResponseStream.CopyToAsync(fs, ct);
+    }
+
     public Task EnsureBucketExistsAsync(string bucketName, CancellationToken ct)
         => Task.CompletedTask;
 

@@ -102,6 +102,12 @@ public static class MediaEndpoints
                 : ToHttpResult(result);
         });
 
+        group.MapGet("/{assetId:guid}/chapters/suggestions", async (Guid assetId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetSuggestedChaptersQuery(assetId), ct);
+            return ToHttpResult(result);
+        });
+
         return app;
     }
 

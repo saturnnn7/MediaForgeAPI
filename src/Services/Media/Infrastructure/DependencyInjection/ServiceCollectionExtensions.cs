@@ -48,6 +48,8 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IStorageService, StorageService>();
+        services.AddScoped<ISilenceDetectionService, SilenceDetectionService>();
+        services.AddScoped<IMediaProcessingClient, SilenceDetectionClient>();
         services.AddHttpContextAccessor();
 
         services.AddHostedService<MinioInitializer>();

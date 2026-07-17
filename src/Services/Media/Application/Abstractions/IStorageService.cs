@@ -6,6 +6,7 @@ public interface IStorageService
 {
     Task<string> GenerateUploadUrlAsync(string bucketName, string objectKey, string contentType, TimeSpan expiry, CancellationToken ct);
     Task<string> GenerateDownloadUrlAsync(string bucketName, string objectKey, TimeSpan expiry, CancellationToken ct);
+    Task DownloadToFileAsync(string bucketName, string objectKey, string localPath, CancellationToken ct);
     Task EnsureBucketExistsAsync(string bucketName, CancellationToken ct);
     Task<string> InitiateMultipartUploadAsync(string bucketName, string objectKey, string contentType, CancellationToken ct);
     Task<string> GeneratePartUploadUrlAsync(string bucketName, string objectKey, string uploadId, int partNumber, CancellationToken ct);

@@ -14,5 +14,6 @@ global using MediaForge.Media.Application.Commands.AddChapter;
 global using MediaForge.Media.Application.Commands.UpdateChapter;
 global using MediaForge.Media.Application.Commands.DeleteChapter;
 global using MediaForge.Media.Application.Queries.GetChapters;
+global using MediaForge.Media.Application.Queries.GetSuggestedChapters;
 global using MediaForge.Shared.Infrastructure.Common;
 global using MediatR;
