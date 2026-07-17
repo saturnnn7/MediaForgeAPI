@@ -18,6 +18,8 @@
     <button onclick="load()">Load</button>
   </div>
   <video id="video" controls></video>
+  <canvas id="waveform" width="900" height="80"
+    style="display:none; max-width:900px; margin:10px auto; background:#222; display:block"></canvas>
   <div id="info"></div>
   <script>
     async function load() {
@@ -27,7 +29,10 @@
       const data = await res.json();
 
       document.getElementById('info').innerHTML =
-        `Duration: ${data.durationSeconds}s | Variants: ${data.variants.map(v => v.height + 'p').join(', ')}`;
+        `Duration: ${data.durationSeconds}s | ` +
+        `Variants: ${data.variants.map(v => v.height + 'p').join(', ')} | ` +
+        `Waveform: ${data.waveformUrl ? 'yes' : 'no'} | ` +
+        `Subtitles: ${data.subtitleUrl ? 'yes' : 'no'}`;
 
       // Pick highest quality
       const best = data.variants.sort((a,b) => b.height - a.height)[0];
@@ -40,7 +45,38 @@
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = best.playlistUrl;
       }
+
+      if (data.subtitleUrl) {
+        const track = document.createElement('track');
+        track.kind = 'subtitles';
+        track.label = 'English';
+        track.srclang = 'en';
+        track.src = data.subtitleUrl;
+        track.default = true;
+        video.appendChild(track);
+      }
+
+      if (data.waveformUrl) {
+        fetch(data.waveformUrl)
+          .then(r => r.json())
+          .then(w => drawWaveform(w.peaks));
+      }
+
       video.play();
+    }
+
+    function drawWaveform(peaks) {
+      const canvas = document.getElementById('waveform');
+      canvas.style.display = 'block';
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#4af';
+      const barWidth = w / peaks.length;
+      peaks.forEach((peak, i) => {
+        const barH = peak * h;
+        ctx.fillRect(i * barWidth, (h - barH) / 2, barWidth - 1, barH);
+      });
     }
   </script>
 </body>
