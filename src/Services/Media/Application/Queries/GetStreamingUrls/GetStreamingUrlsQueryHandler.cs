@@ -36,7 +36,8 @@ public sealed class GetStreamingUrlsQueryHandler(
             asset.SubtitleUrl,
             asset.DurationSeconds ?? 0,
             asset.WaveformUrl,
-            chapters);
+            chapters,
+            asset.OutputUrls);
 
         return Result.Success(dto);
     }

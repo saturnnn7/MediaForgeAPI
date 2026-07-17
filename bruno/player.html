@@ -18,9 +18,11 @@
     <button onclick="load()">Load</button>
   </div>
   <video id="video" controls></video>
+  <audio id="audio" controls style="display:none; width:100%; max-width:900px; margin:20px auto"></audio>
   <canvas id="waveform" width="900" height="80"
     style="display:none; max-width:900px; margin:10px auto; background:#222; display:block"></canvas>
   <div id="info"></div>
+  <div id="chapters"></div>
   <script>
     async function load() {
       const assetId = document.getElementById('assetId').value.trim();
@@ -34,26 +36,56 @@
         `Waveform: ${data.waveformUrl ? 'yes' : 'no'} | ` +
         `Subtitles: ${data.subtitleUrl ? 'yes' : 'no'}`;
 
-      // Pick highest quality
-      const best = data.variants.sort((a,b) => b.height - a.height)[0];
+      const isAudio = data.variants.length === 0;
       const video = document.getElementById('video');
+      const audio = document.getElementById('audio');
+      let player;
 
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(best.playlistUrl);
-        hls.attachMedia(video);
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = best.playlistUrl;
-      }
+      if (isAudio) {
+        video.style.display = 'none';
+        audio.style.display = 'block';
+        player = audio;
 
-      if (data.subtitleUrl) {
-        const track = document.createElement('track');
-        track.kind = 'subtitles';
-        track.label = 'English';
-        track.srclang = 'en';
-        track.src = data.subtitleUrl;
-        track.default = true;
-        video.appendChild(track);
+        audio.src = data.outputUrls[0];
+
+        if (data.subtitleUrl) {
+          const track = document.createElement('track');
+          track.kind = 'subtitles';
+          track.label = 'English';
+          track.srclang = 'en';
+          track.src = data.subtitleUrl;
+          track.default = true;
+          audio.appendChild(track);
+        }
+
+        audio.play();
+      } else {
+        video.style.display = 'block';
+        audio.style.display = 'none';
+        player = video;
+
+        // Pick highest quality
+        const best = data.variants.sort((a,b) => b.height - a.height)[0];
+
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(best.playlistUrl);
+          hls.attachMedia(video);
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = best.playlistUrl;
+        }
+
+        if (data.subtitleUrl) {
+          const track = document.createElement('track');
+          track.kind = 'subtitles';
+          track.label = 'English';
+          track.srclang = 'en';
+          track.src = data.subtitleUrl;
+          track.default = true;
+          video.appendChild(track);
+        }
+
+        video.play();
       }
 
       if (data.waveformUrl) {
@@ -62,7 +94,11 @@
           .then(w => drawWaveform(w.peaks));
       }
 
-      video.play();
+      if (data.chapters && data.chapters.length > 0) {
+        renderChapters(data.chapters, player);
+      } else {
+        document.getElementById('chapters').innerHTML = '';
+      }
     }
 
     function drawWaveform(peaks) {
@@ -77,6 +113,24 @@
         const barH = peak * h;
         ctx.fillRect(i * barWidth, (h - barH) / 2, barWidth - 1, barH);
       });
+    }
+
+    function renderChapters(chapters, player) {
+      const div = document.getElementById('chapters');
+      div.innerHTML = '<h3 style="color:#fff">Chapters</h3>';
+      chapters.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.textContent = `${formatTime(ch.startTimeSeconds)} - ${ch.title}`;
+        btn.style.cssText = 'display:block;margin:4px 0;padding:6px 12px;background:#333;color:#fff;border:none;cursor:pointer;border-radius:4px;width:300px;text-align:left';
+        btn.onclick = () => { player.currentTime = ch.startTimeSeconds; player.play(); };
+        div.appendChild(btn);
+      });
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
     }
   </script>
 </body>
