@@ -93,5 +93,14 @@ public sealed class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAsse
 
         builder.HasIndex(x => x.UserId).HasDatabaseName("ix_media_assets_user_id");
         builder.HasIndex(x => x.Status).HasDatabaseName("ix_media_assets_status");
+
+        builder.Ignore(x => x.Chapters);
+
+        builder.HasMany<Chapter>("_chapters")
+            .WithOne()
+            .HasForeignKey(c => c.AssetId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation("_chapters").UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

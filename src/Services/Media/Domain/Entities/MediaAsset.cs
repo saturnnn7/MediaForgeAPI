@@ -8,6 +8,7 @@ public sealed class MediaAsset : AggregateRoot
     private const long MaxFileSizeBytes = 10_737_418_240L;
 
     private readonly List<string> _outputUrls = [];
+    private readonly List<Chapter> _chapters = [];
 
     private MediaAsset() { }
 
@@ -28,6 +29,7 @@ public sealed class MediaAsset : AggregateRoot
     public DateTime? ProcessingCompletedAt { get; private set; }
 
     public IReadOnlyList<string> OutputUrls => _outputUrls.AsReadOnly();
+    public IReadOnlyList<Chapter> Chapters => _chapters.AsReadOnly();
 
     public static Result<MediaAsset> Create(
         Guid userId,
@@ -138,6 +140,37 @@ public sealed class MediaAsset : AggregateRoot
         }
 
         Status = MediaAssetStatus.ProcessingQueued;
+
+        return Result.Success();
+    }
+
+    public Result<Chapter> AddChapter(string title, TimeSpan startTime, int order, TimeSpan? endTime = null)
+    {
+        if (_chapters.Any(c => c.Order == order))
+            return Result.Failure<Chapter>(Error.Conflict("Chapter", $"A chapter with order {order} already exists."));
+
+        var chapterResult = Chapter.Create(Id, title, startTime, order, endTime);
+        if (chapterResult.IsFailure)
+            return chapterResult;
+
+        _chapters.Add(chapterResult.Value);
+
+        return Result.Success(chapterResult.Value);
+    }
+
+    public Result RemoveChapter(Guid chapterId)
+    {
+        var chapter = _chapters.FirstOrDefault(c => c.Id == chapterId);
+        if (chapter is null)
+            return Result.Failure(Error.NotFound("Chapter", chapterId));
+
+        _chapters.Remove(chapter);
+
+        var remaining = _chapters.OrderBy(c => c.Order).ToList();
+        for (var i = 0; i < remaining.Count; i++)
+        {
+            remaining[i].ReorderTo(i + 1);
+        }
 
         return Result.Success();
     }

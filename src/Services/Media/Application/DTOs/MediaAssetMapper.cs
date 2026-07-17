@@ -17,4 +17,12 @@ internal static class MediaAssetMapper
             asset.DurationSeconds,
             asset.CreatedAt,
             asset.ProcessingCompletedAt);
+
+    public static ChapterDto ToDto(this Chapter chapter) =>
+        new(
+            chapter.Id,
+            chapter.Title,
+            chapter.StartTime.TotalSeconds,
+            chapter.EndTime?.TotalSeconds,
+            chapter.Order);
 }

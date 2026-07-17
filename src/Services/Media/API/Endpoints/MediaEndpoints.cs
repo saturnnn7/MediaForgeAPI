@@ -72,6 +72,36 @@ public static class MediaEndpoints
                 : ToHttpResult(result);
         });
 
+        app.MapGet("/api/media/{assetId:guid}/chapters", async (Guid assetId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetChaptersQuery(assetId), ct);
+            return ToHttpResult(result);
+        });
+
+        group.MapPost("/{assetId:guid}/chapters", async (Guid assetId, AddChapterRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var command = new AddChapterCommand(assetId, request.Title, request.StartTimeSeconds, request.Order, request.EndTimeSeconds);
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.Created($"/api/media/{assetId}/chapters", result.Value)
+                : ToHttpResult(result);
+        });
+
+        group.MapPut("/{assetId:guid}/chapters/{chapterId:guid}", async (Guid assetId, Guid chapterId, UpdateChapterRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var command = new UpdateChapterCommand(assetId, chapterId, request.Title, request.StartTimeSeconds, request.EndTimeSeconds);
+            var result = await sender.Send(command, ct);
+            return ToHttpResult(result);
+        });
+
+        group.MapDelete("/{assetId:guid}/chapters/{chapterId:guid}", async (Guid assetId, Guid chapterId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new DeleteChapterCommand(assetId, chapterId), ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : ToHttpResult(result);
+        });
+
         return app;
     }
 
@@ -86,4 +116,8 @@ public static class MediaEndpoints
         : result.Error.Code.Contains("NotFound") ? Results.NotFound(result.Error)
         : result.Error.Code.Contains("Unauthorized") ? Results.Unauthorized()
         : Results.BadRequest(result.Error);
+
+    private sealed record AddChapterRequest(string Title, double StartTimeSeconds, int Order, double? EndTimeSeconds);
+
+    private sealed record UpdateChapterRequest(string Title, double StartTimeSeconds, double? EndTimeSeconds);
 }

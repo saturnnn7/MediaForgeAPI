@@ -6,7 +6,8 @@ public sealed record StreamingUrlsDto(
     IReadOnlyList<StreamingVariantDto> Variants,
     string? SubtitleUrl,
     double DurationSeconds,
-    string? WaveformUrl);
+    string? WaveformUrl,
+    IReadOnlyList<ChapterDto> Chapters);
 
 public sealed record StreamingVariantDto(
     int Height,

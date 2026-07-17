@@ -7,6 +7,9 @@ public sealed class MediaAssetRepository(MediaDbContext dbContext) : IMediaAsset
     public Task<MediaAsset?> GetByIdAsync(Guid id, CancellationToken ct) =>
         dbContext.MediaAssets.FirstOrDefaultAsync(x => x.Id == id, ct);
 
+    public Task<MediaAsset?> GetByIdWithChaptersAsync(Guid id, CancellationToken ct) =>
+        dbContext.MediaAssets.Include("_chapters").FirstOrDefaultAsync(x => x.Id == id, ct);
+
     public async Task<IReadOnlyList<MediaAsset>> GetByUserIdAsync(Guid userId, int page, int pageSize, CancellationToken ct) =>
         await dbContext.MediaAssets
             .Where(x => x.UserId == userId)

@@ -10,7 +10,7 @@ public sealed class GetStreamingUrlsQueryHandler(
 
     public async Task<Result<StreamingUrlsDto>> Handle(GetStreamingUrlsQuery request, CancellationToken cancellationToken)
     {
-        var asset = await mediaAssetRepository.GetByIdAsync(request.AssetId, cancellationToken);
+        var asset = await mediaAssetRepository.GetByIdWithChaptersAsync(request.AssetId, cancellationToken);
         if (asset is null)
             return Result.Failure<StreamingUrlsDto>(Error.NotFound("MediaAsset", request.AssetId));
 
@@ -24,13 +24,19 @@ public sealed class GetStreamingUrlsQueryHandler(
             .OrderByDescending(v => v.Height)
             .ToList();
 
+        var chapters = asset.Chapters
+            .OrderBy(c => c.Order)
+            .Select(c => c.ToDto())
+            .ToList();
+
         var dto = new StreamingUrlsDto(
             asset.Id,
             asset.ThumbnailUrl ?? string.Empty,
             variants,
             asset.SubtitleUrl,
             asset.DurationSeconds ?? 0,
-            asset.WaveformUrl);
+            asset.WaveformUrl,
+            chapters);
 
         return Result.Success(dto);
     }

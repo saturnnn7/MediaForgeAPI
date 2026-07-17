@@ -8,6 +8,7 @@ public sealed class MediaDbContext(DbContextOptions<MediaDbContext> options, IPu
     : BaseDbContext(options, publisher), IMediaUnitOfWork
 {
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+    public DbSet<Chapter> Chapters => Set<Chapter>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
