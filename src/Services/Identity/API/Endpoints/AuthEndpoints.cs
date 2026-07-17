@@ -53,6 +53,26 @@ public static class AuthEndpoints
             .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
             .RequireAuthenticatedUser());
 
+        group.MapPost("/become-creator", async (ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new BecomeCreatorCommand(), ct);
+            return result.IsSuccess
+                ? Results.Ok()
+                : Results.BadRequest(result.Error);
+        }).RequireAuthorization(policy => policy
+            .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+            .RequireAuthenticatedUser());
+
+        group.MapGet("/profile", async (ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetUserProfileQuery(), ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : Results.BadRequest(result.Error);
+        }).RequireAuthorization(policy => policy
+            .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+            .RequireAuthenticatedUser());
+
         return app;
     }
 }

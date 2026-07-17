@@ -1,0 +1,20 @@
+meta {
+  name: Become Creator
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/auth/become-creator
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Requires a verified email (see 05_verify_email.bru). On success, the user's
+  Role flips from Listener to Creator - re-login (02_login.bru) to get a fresh
+  token with the updated "role" claim, then call 07_get_profile.bru to confirm.
+}

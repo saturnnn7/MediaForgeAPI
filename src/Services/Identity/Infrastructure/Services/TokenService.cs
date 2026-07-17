@@ -92,7 +92,8 @@ public sealed class TokenService(IConfiguration configuration, IDistributedCache
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim("display_name", user.DisplayName),
-            new Claim("email_verified", user.IsEmailVerified.ToString())
+            new Claim("email_verified", user.IsEmailVerified.ToString()),
+            new Claim("role", user.Role.ToString().ToLowerInvariant())
         };
 
         var token = new JwtSecurityToken(

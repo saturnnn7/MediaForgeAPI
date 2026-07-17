@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 
-namespace MediaForge.Media.Infrastructure.Services;
+namespace MediaForge.Identity.Infrastructure.Services;
 
-public sealed class UserContextService(IHttpContextAccessor httpContextAccessor) : IUserContextService
+public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {
     public Guid UserId
     {
@@ -28,18 +28,6 @@ public sealed class UserContextService(IHttpContextAccessor httpContextAccessor)
 
             return user.FindFirstValue("email") ?? user.FindFirstValue(ClaimTypes.Email)
                 ?? throw new InvalidOperationException("Email claim not found.");
-        }
-    }
-
-    public string Role
-    {
-        get
-        {
-            var user = httpContextAccessor.HttpContext?.User
-                ?? throw new InvalidOperationException("No HTTP context available.");
-
-            return user.FindFirstValue("role") ?? user.FindFirstValue(ClaimTypes.Role)
-                ?? throw new InvalidOperationException("Role claim not found.");
         }
     }
 }

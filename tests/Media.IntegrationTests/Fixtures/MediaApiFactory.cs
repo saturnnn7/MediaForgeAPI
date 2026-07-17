@@ -106,22 +106,23 @@ public sealed class MediaApiFactory(MediaInfrastructureFixture fixture) : WebApp
 
     async Task IAsyncLifetime.DisposeAsync() => await base.DisposeAsync();
 
-    public HttpClient CreateAuthenticatedClient(Guid userId, string email)
+    public HttpClient CreateAuthenticatedClient(Guid userId, string email, string role = "creator")
     {
         var client = CreateClient();
-        var token = GenerateUnsignedJwt(userId, email);
+        var token = GenerateUnsignedJwt(userId, email, role);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
     }
 
-    private static string GenerateUnsignedJwt(Guid userId, string email)
+    private static string GenerateUnsignedJwt(Guid userId, string email, string role)
     {
         var signingCredentials = new SigningCredentials(DummySigningKey, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
             new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, email)
+            new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email, email),
+            new Claim("role", role)
         };
 
         var token = new JwtSecurityToken(

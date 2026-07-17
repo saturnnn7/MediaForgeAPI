@@ -35,6 +35,10 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
             .HasColumnName("is_email_verified")
             .HasDefaultValue(false);
 
+        builder.Property(u => u.Role)
+            .HasColumnName("role")
+            .HasConversion<string>()
+            .HasDefaultValue(UserRole.Listener);
         builder.Property(u => u.CreatedAt)
             .HasColumnName("created_at");
 

@@ -6,5 +6,8 @@ global using MediaForge.Identity.Application.Commands.Register;
 global using MediaForge.Identity.Application.Commands.Login;
 global using MediaForge.Identity.Application.Commands.RefreshToken;
 global using MediaForge.Identity.Application.Commands.VerifyEmail;
+global using MediaForge.Identity.Application.Commands.BecomeCreator;
+global using MediaForge.Identity.Application.Commands.RevokeCreator;
+global using MediaForge.Identity.Application.Queries.GetUserProfile;
 global using MediaForge.Shared.Infrastructure.Common;
 global using MediatR;

@@ -4,4 +4,5 @@ public interface IUserContextService
 {
     Guid UserId { get; }
     string Email { get; }
+    string Role { get; }
 }

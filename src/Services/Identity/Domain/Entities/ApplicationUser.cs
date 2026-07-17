@@ -13,6 +13,7 @@ public sealed class ApplicationUser : AggregateRoot
     public string PasswordHash { get; private set; } = string.Empty;
     public string? AvatarUrl { get; private set; }
     public bool IsEmailVerified { get; private set; }
+    public UserRole Role { get; private set; } = UserRole.Listener;
     public DateTime CreatedAt { get; init; }
 
     public IReadOnlyList<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
@@ -69,6 +70,28 @@ public sealed class ApplicationUser : AggregateRoot
     public Result UpdateAvatar(string url)
     {
         AvatarUrl = url;
+        return Result.Success();
+    }
+
+    public Result BecomeCreator()
+    {
+        if (Role == UserRole.Creator)
+        {
+            return Result.Failure(Error.Conflict("User", "Already a Creator."));
+        }
+
+        if (!IsEmailVerified)
+        {
+            return Result.Failure(Error.Validation("Email", "Email must be verified to become a Creator."));
+        }
+
+        Role = UserRole.Creator;
+        return Result.Success();
+    }
+
+    public Result RevokeCreator()
+    {
+        Role = UserRole.Listener;
         return Result.Success();
     }
 }

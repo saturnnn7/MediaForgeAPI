@@ -69,7 +69,9 @@ public static class ServiceCollectionExtensions
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorizationBuilder()
+            .AddPolicy("CreatorOnly", p => p.RequireClaim("role", "creator"))
+            .AddPolicy("AdminOnly", p => p.RequireClaim("role", "admin"));
 
         services.AddStackExchangeRedisCache(opts => opts.Configuration = configuration.GetConnectionString("Redis"));
 
@@ -78,7 +80,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IAppSettings, AppSettings>();
+        services.AddHttpContextAccessor();
 
         services.AddMassTransit(x =>
         {

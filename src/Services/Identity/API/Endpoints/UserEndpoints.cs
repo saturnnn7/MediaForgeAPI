@@ -29,6 +29,7 @@ public static class UserEndpoints
                 applicationUser.DisplayName,
                 applicationUser.AvatarUrl,
                 applicationUser.IsEmailVerified,
+                applicationUser.Role.ToString().ToLowerInvariant(),
                 applicationUser.CreatedAt));
         });
 

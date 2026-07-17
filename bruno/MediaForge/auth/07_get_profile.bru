@@ -1,0 +1,14 @@
+meta {
+  name: Get Profile
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/auth/profile
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

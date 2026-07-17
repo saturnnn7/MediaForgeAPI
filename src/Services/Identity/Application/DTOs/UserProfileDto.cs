@@ -6,4 +6,5 @@ public sealed record UserProfileDto(
     string DisplayName,
     string? AvatarUrl,
     bool IsEmailVerified,
+    string Role,
     DateTime CreatedAt);

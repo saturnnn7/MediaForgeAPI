@@ -34,6 +34,9 @@ public sealed class RequestUploadUrlCommandHandler(
         if (user is null)
             return Result.Failure<UploadUrlDto>(Error.Unauthorized("User not found in identity service."));
 
+        if (userContext.Role != "creator" && userContext.Role != "admin")
+            return Result.Failure<UploadUrlDto>(Error.Unauthorized("Only Creators can upload media."));
+
         var mediaType = request.ContentType.StartsWith("video/", StringComparison.Ordinal) ? MediaType.Video : MediaType.Audio;
         var objectKey = $"{userContext.UserId}/{Guid.NewGuid()}/{request.FileName}";
 

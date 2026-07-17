@@ -27,6 +27,7 @@ public sealed class RegisterCommandHandler(
             user.DisplayName,
             user.AvatarUrl,
             user.IsEmailVerified,
+            user.Role.ToString().ToLowerInvariant(),
             user.CreatedAt));
     }
 }
