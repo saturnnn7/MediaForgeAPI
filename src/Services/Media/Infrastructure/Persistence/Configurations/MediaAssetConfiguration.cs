@@ -59,6 +59,11 @@ public sealed class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAsse
             .HasMaxLength(2000)
             .IsRequired(false);
 
+        builder.Property(x => x.SubtitleUrl)
+            .HasColumnName("subtitle_url")
+            .HasMaxLength(2000)
+            .IsRequired(false);
+
         builder.Property(x => x.TranscriptionText)
             .HasColumnName("transcription_text")
             .HasColumnType("text")

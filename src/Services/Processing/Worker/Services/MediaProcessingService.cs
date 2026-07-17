@@ -59,9 +59,9 @@ public sealed class MediaProcessingService(
                 var thumbnailKey = $"processed/{assetId}/thumbnail.webp";
                 var thumbnailUrl = await storageService.UploadFileAsync(outputBucketName, thumbnailKey, thumbnailWebpPath, "image/webp", ct);
 
-                var transcriptionText = await TranscribeAsync(localFilePath, ct);
+                var (transcriptionText, subtitleUrl) = await TranscribeAsync(localFilePath, outputBucketName, assetId, ct);
 
-                return new ProcessingResult(thumbnailUrl, transcriptionText, outputUrls, durationSeconds, waveformUrl);
+                return new ProcessingResult(thumbnailUrl, transcriptionText, outputUrls, durationSeconds, waveformUrl, subtitleUrl);
             }
             finally
             {
@@ -206,27 +206,66 @@ public sealed class MediaProcessingService(
         return await storageService.UploadFileAsync(outputBucketName, waveformKey, waveformPath, "application/json", ct);
     }
 
-    private async Task<string?> TranscribeAsync(string filePath, CancellationToken ct)
+    private async Task<(string? Text, string? SubtitleUrl)> TranscribeAsync(
+        string filePath, string outputBucketName, string assetId, CancellationToken ct)
     {
         var key = configuration["OpenAI:ApiKey"];
         if (string.IsNullOrEmpty(key))
         {
             logger.LogWarning("OpenAI API key not configured — skipping transcription.");
-            return null;
+            return (null, null);
         }
 
         try
         {
             var client = openAiClient.GetAudioClient("whisper-1");
             using var fs = File.OpenRead(filePath);
-            var result = await client.TranscribeAudioAsync(fs, Path.GetFileName(filePath),
-                new AudioTranscriptionOptions { Language = "en" }, ct);
-            return result.Value.Text;
+            var options = new AudioTranscriptionOptions
+            {
+                Language = "en",
+                ResponseFormat = AudioTranscriptionFormat.Verbose
+            };
+            var result = await client.TranscribeAudioAsync(fs, Path.GetFileName(filePath), options, ct);
+
+            if (result.Value.Segments is not { Count: > 0 } segments)
+            {
+                return (result.Value.Text, null);
+            }
+
+            var vttContent = GenerateVtt(segments);
+            var vttPath = Path.Combine(Path.GetTempPath(), "mediaforge", assetId, "subtitles.vtt");
+            Directory.CreateDirectory(Path.GetDirectoryName(vttPath)!);
+            await File.WriteAllTextAsync(vttPath, vttContent, ct);
+
+            var subtitleKey = $"processed/{assetId}/subtitles.vtt";
+            var subtitleUrl = await storageService.UploadFileAsync(outputBucketName, subtitleKey, vttPath, "text/vtt", ct);
+
+            return (result.Value.Text, subtitleUrl);
         }
         catch (Exception ex)
         {
             logger.LogWarning("Transcription failed: {Error}", ex.Message);
-            return null;
+            return (null, null);
         }
     }
+
+    private static string GenerateVtt(IEnumerable<TranscribedSegment> segments)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("WEBVTT");
+        sb.AppendLine();
+        var index = 1;
+        foreach (var seg in segments)
+        {
+            sb.AppendLine(index.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"{FormatVttTime(seg.StartTime)} --> {FormatVttTime(seg.EndTime)}");
+            sb.AppendLine(seg.Text.Trim());
+            sb.AppendLine();
+            index++;
+        }
+        return sb.ToString();
+    }
+
+    private static string FormatVttTime(TimeSpan t) =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{(int)t.TotalHours:D2}:{t.Minutes:D2}:{t.Seconds:D2}.{t.Milliseconds:D3}");
 }

@@ -21,6 +21,7 @@ public sealed class MediaAsset : AggregateRoot
     public string ObjectKey { get; private set; } = string.Empty;
     public string? ThumbnailUrl { get; private set; }
     public string? WaveformUrl { get; private set; }
+    public string? SubtitleUrl { get; private set; }
     public string? TranscriptionText { get; private set; }
     public double? DurationSeconds { get; private set; }
     public DateTime CreatedAt { get; init; }
@@ -91,7 +92,8 @@ public sealed class MediaAsset : AggregateRoot
         string? transcription,
         IEnumerable<string> outputUrls,
         double durationSeconds,
-        string? waveformUrl = null)
+        string? waveformUrl = null,
+        string? subtitleUrl = null)
     {
         if (Status != MediaAssetStatus.Processing && Status != MediaAssetStatus.Uploaded)
         {
@@ -105,6 +107,7 @@ public sealed class MediaAsset : AggregateRoot
         _outputUrls.AddRange(outputUrls);
         DurationSeconds = durationSeconds;
         WaveformUrl = waveformUrl;
+        SubtitleUrl = subtitleUrl;
         ProcessingCompletedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new MediaAssetProcessingCompletedDomainEvent(Id, UserId));

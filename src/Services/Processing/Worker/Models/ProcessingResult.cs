@@ -5,4 +5,5 @@ public sealed record ProcessingResult(
     string? TranscriptionText,
     IReadOnlyList<string> OutputUrls,
     double DurationSeconds,
-    string? WaveformUrl = null);
+    string? WaveformUrl = null,
+    string? SubtitleUrl = null);

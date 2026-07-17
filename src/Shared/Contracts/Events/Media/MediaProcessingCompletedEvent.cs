@@ -10,5 +10,6 @@ public sealed record MediaProcessingCompletedEvent(
     IReadOnlyList<string> OutputUrls,
     string ThumbnailUrl,
     double DurationSeconds,
-    string? WaveformUrl = null
+    string? WaveformUrl = null,
+    string? SubtitleUrl = null
 ) : IIntegrationEvent;

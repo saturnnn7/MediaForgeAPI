@@ -38,7 +38,8 @@ public sealed class MediaUploadedConsumer(
                 result.OutputUrls,
                 result.ThumbnailUrl,
                 result.DurationSeconds,
-                result.WaveformUrl));
+                result.WaveformUrl,
+                result.SubtitleUrl));
 
             logger.LogInformation("Completed processing for asset {AssetId}", context.Message.AssetId);
         }

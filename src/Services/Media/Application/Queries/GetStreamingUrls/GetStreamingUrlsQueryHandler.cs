@@ -28,7 +28,7 @@ public sealed class GetStreamingUrlsQueryHandler(
             asset.Id,
             asset.ThumbnailUrl ?? string.Empty,
             variants,
-            null,
+            asset.SubtitleUrl,
             asset.DurationSeconds ?? 0,
             asset.WaveformUrl);
 

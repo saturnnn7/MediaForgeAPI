@@ -25,7 +25,8 @@ public sealed class MediaProcessingCompletedConsumer(
             msg.TranscriptionText,
             msg.OutputUrls,
             msg.DurationSeconds,
-            msg.WaveformUrl);
+            msg.WaveformUrl,
+            msg.SubtitleUrl);
 
         if (result.IsFailure)
         {
