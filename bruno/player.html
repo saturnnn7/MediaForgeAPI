@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MediaForge Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
+    video { width: 100%; max-width: 900px; display: block; margin: 20px auto; }
+    input { width: 600px; padding: 8px; font-size: 14px; }
+    button { padding: 8px 16px; margin-left: 8px; }
+    #info { margin: 10px auto; max-width: 900px; font-size: 13px; color: #aaa; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center">MediaForge HLS Player</h2>
+  <div style="text-align:center; margin-bottom:20px">
+    <input id="assetId" placeholder="Enter Asset ID (GUID)" />
+    <button onclick="load()">Load</button>
+  </div>
+  <video id="video" controls></video>
+  <div id="info"></div>
+  <script>
+    async function load() {
+      const assetId = document.getElementById('assetId').value.trim();
+      const res = await fetch(`http://localhost:5000/api/media/${assetId}/stream`);
+      if (!res.ok) { alert('Asset not found or not ready'); return; }
+      const data = await res.json();
+
+      document.getElementById('info').innerHTML =
+        `Duration: ${data.durationSeconds}s | Variants: ${data.variants.map(v => v.height + 'p').join(', ')}`;
+
+      // Pick highest quality
+      const best = data.variants.sort((a,b) => b.height - a.height)[0];
+      const video = document.getElementById('video');
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(best.playlistUrl);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = best.playlistUrl;
+      }
+      video.play();
+    }
+  </script>
+</body>
+</html>

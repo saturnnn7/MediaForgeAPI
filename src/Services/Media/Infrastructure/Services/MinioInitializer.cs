@@ -1,4 +1,5 @@
 using Amazon.S3;
+using Amazon.S3.Model;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -23,6 +24,26 @@ public sealed class MinioInitializer(IAmazonS3 s3, ILogger<MinioInitializer> log
                 else
                 {
                     logger.LogInformation("MinIO bucket already exists: {Bucket}", bucket);
+                }
+
+                if (bucket == "mediaforge-processed")
+                {
+                    await s3.PutBucketPolicyAsync(new PutBucketPolicyRequest
+                    {
+                        BucketName = bucket,
+                        Policy = """
+                        {
+                          "Version": "2012-10-17",
+                          "Statement": [{
+                            "Effect": "Allow",
+                            "Principal": {"AWS": ["*"]},
+                            "Action": ["s3:GetObject"],
+                            "Resource": ["arn:aws:s3:::mediaforge-processed/*"]
+                          }]
+                        }
+                        """
+                    }, cancellationToken);
+                    logger.LogInformation("Applied public read policy to bucket: {Bucket}", bucket);
                 }
             }
             catch (Exception ex)

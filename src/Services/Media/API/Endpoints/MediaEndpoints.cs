@@ -34,6 +34,12 @@ public static class MediaEndpoints
             return ToHttpResult(result);
         });
 
+        app.MapGet("/api/media/{assetId:guid}/stream", async (Guid assetId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetStreamingUrlsQuery(assetId), ct);
+            return ToHttpResult(result);
+        });
+
         return app;
     }
 

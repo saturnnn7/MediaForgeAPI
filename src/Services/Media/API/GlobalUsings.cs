@@ -5,5 +5,6 @@ global using MediaForge.Media.Application.Commands.RequestUploadUrl;
 global using MediaForge.Media.Application.Commands.ConfirmUpload;
 global using MediaForge.Media.Application.Queries.GetMediaAsset;
 global using MediaForge.Media.Application.Queries.GetUserMediaAssets;
+global using MediaForge.Media.Application.Queries.GetStreamingUrls;
 global using MediaForge.Shared.Infrastructure.Common;
 global using MediatR;
