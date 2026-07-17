@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-// Auth — gateway validates tokens, forwards claims downstream
+// Auth - gateway validates tokens, forwards claims downstream
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
     {
@@ -52,7 +52,7 @@ builder.Services.AddSignalR()
         opts.Configuration.ChannelPrefix = RedisChannel.Literal("mediaforge");
     });
 
-// MassTransit — consumers only, no outbox (gateway doesn't publish, only consumes)
+// MassTransit - consumers only, no outbox (gateway doesn't publish, only consumes)
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<MediaProcessingCompletedConsumer>();
@@ -80,13 +80,26 @@ builder.Services.AddMassTransit(x =>
 builder.Services.AddSerilog(cfg => cfg.WriteTo.Console(
     formatProvider: System.Globalization.CultureInfo.InvariantCulture));
 
+builder.Services.AddCors(opts =>
+{
+    opts.AddDefaultPolicy(policy =>
+    {
+        policy
+            .SetIsOriginAllowed(_ => true)  // allow file:// and any origin in dev
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 app.UseRateLimiter();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// SignalR hub — before YARP so it doesn't get proxied
+// SignalR hub - before YARP so it doesn't get proxied
 app.MapHub<NotificationHub>("/hubs/notifications")
    .RequireAuthorization();
 
