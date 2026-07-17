@@ -4,4 +4,5 @@ public sealed record ProcessingResult(
     string ThumbnailUrl,
     string? TranscriptionText,
     IReadOnlyList<string> OutputUrls,
-    double DurationSeconds);
+    double DurationSeconds,
+    string? WaveformUrl = null);

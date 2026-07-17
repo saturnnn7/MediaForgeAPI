@@ -20,6 +20,7 @@ public sealed class MediaAsset : AggregateRoot
     public string BucketName { get; private set; } = string.Empty;
     public string ObjectKey { get; private set; } = string.Empty;
     public string? ThumbnailUrl { get; private set; }
+    public string? WaveformUrl { get; private set; }
     public string? TranscriptionText { get; private set; }
     public double? DurationSeconds { get; private set; }
     public DateTime CreatedAt { get; init; }
@@ -85,7 +86,12 @@ public sealed class MediaAsset : AggregateRoot
         return Result.Success();
     }
 
-    public Result CompleteProcessing(string thumbnailUrl, string? transcription, IEnumerable<string> outputUrls, double durationSeconds)
+    public Result CompleteProcessing(
+        string thumbnailUrl,
+        string? transcription,
+        IEnumerable<string> outputUrls,
+        double durationSeconds,
+        string? waveformUrl = null)
     {
         if (Status != MediaAssetStatus.Processing && Status != MediaAssetStatus.Uploaded)
         {
@@ -98,6 +104,7 @@ public sealed class MediaAsset : AggregateRoot
         _outputUrls.Clear();
         _outputUrls.AddRange(outputUrls);
         DurationSeconds = durationSeconds;
+        WaveformUrl = waveformUrl;
         ProcessingCompletedAt = DateTime.UtcNow;
 
         RaiseDomainEvent(new MediaAssetProcessingCompletedDomainEvent(Id, UserId));

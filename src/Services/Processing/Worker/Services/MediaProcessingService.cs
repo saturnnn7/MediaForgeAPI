@@ -43,16 +43,25 @@ public sealed class MediaProcessingService(
 
                 var thumbnailWebpPath = await GenerateThumbnailAsync(localFilePath, outputDir, isVideo, ct);
 
-                var outputUrls = isVideo
-                    ? await TranscodeVideoAsync(localFilePath, outputDir, outputBucketName, assetId, ct)
-                    : await TranscodeAudioAsync(localFilePath, outputDir, outputBucketName, assetId, ct);
+                IReadOnlyList<string> outputUrls;
+                string? waveformUrl = null;
+                if (isVideo)
+                {
+                    outputUrls = await TranscodeVideoAsync(localFilePath, outputDir, outputBucketName, assetId, ct);
+                }
+                else
+                {
+                    var audioResult = await TranscodeAudioAsync(localFilePath, outputDir, outputBucketName, assetId, ct);
+                    outputUrls = audioResult.OutputUrls;
+                    waveformUrl = audioResult.WaveformUrl;
+                }
 
                 var thumbnailKey = $"processed/{assetId}/thumbnail.webp";
                 var thumbnailUrl = await storageService.UploadFileAsync(outputBucketName, thumbnailKey, thumbnailWebpPath, "image/webp", ct);
 
                 var transcriptionText = await TranscribeAsync(localFilePath, ct);
 
-                return new ProcessingResult(thumbnailUrl, transcriptionText, outputUrls, durationSeconds);
+                return new ProcessingResult(thumbnailUrl, transcriptionText, outputUrls, durationSeconds, waveformUrl);
             }
             finally
             {
@@ -140,7 +149,7 @@ public sealed class MediaProcessingService(
         return outputUrls;
     }
 
-    private async Task<IReadOnlyList<string>> TranscodeAudioAsync(string localFilePath, string outputDir, string outputBucketName, string assetId, CancellationToken ct)
+    private async Task<(IReadOnlyList<string> OutputUrls, string? WaveformUrl)> TranscodeAudioAsync(string localFilePath, string outputDir, string outputBucketName, string assetId, CancellationToken ct)
     {
         var mp3Path = Path.Combine(outputDir, "output.mp3");
 
@@ -154,7 +163,47 @@ public sealed class MediaProcessingService(
         var key = $"processed/{assetId}/audio.mp3";
         var url = await storageService.UploadFileAsync(outputBucketName, key, mp3Path, "audio/mpeg", ct);
 
-        return [url];
+        var waveformUrl = await GenerateWaveformAsync(localFilePath, outputDir, outputBucketName, assetId, ct);
+
+        return ([url], waveformUrl);
+    }
+
+    private async Task<string> GenerateWaveformAsync(string localFilePath, string outputDir, string outputBucketName, string assetId, CancellationToken ct)
+    {
+        var pcmPath = Path.Combine(outputDir, "audio.raw");
+        await FFMpegArguments
+            .FromFileInput(localFilePath)
+            .OutputToFile(pcmPath, overwrite: true, opts => opts
+                .WithCustomArgument("-f s16le -ac 1 -ar 8000"))
+            .ProcessAsynchronously();
+
+        var samples = new short[new FileInfo(pcmPath).Length / 2];
+        using (var fs = File.OpenRead(pcmPath))
+        using (var br = new BinaryReader(fs))
+        {
+            for (var i = 0; i < samples.Length; i++)
+                samples[i] = br.ReadInt16();
+        }
+
+        const int peakCount = 200;
+        var peaks = new float[peakCount];
+        var samplesPerPeak = Math.Max(1, samples.Length / peakCount);
+        for (var i = 0; i < peakCount; i++)
+        {
+            var start = i * samplesPerPeak;
+            var end = Math.Min(start + samplesPerPeak, samples.Length);
+            float max = 0;
+            for (var j = start; j < end; j++)
+                max = Math.Max(max, Math.Abs(samples[j]) / 32768f);
+            peaks[i] = max;
+        }
+
+        var waveformJson = System.Text.Json.JsonSerializer.Serialize(new { peaks });
+        var waveformPath = Path.Combine(outputDir, "waveform.json");
+        await File.WriteAllTextAsync(waveformPath, waveformJson, ct);
+
+        var waveformKey = $"processed/{assetId}/waveform.json";
+        return await storageService.UploadFileAsync(outputBucketName, waveformKey, waveformPath, "application/json", ct);
     }
 
     private async Task<string?> TranscribeAsync(string filePath, CancellationToken ct)
