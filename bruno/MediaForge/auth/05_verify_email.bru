@@ -1,0 +1,21 @@
+meta {
+  name: Verify Email
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/auth/verify-email?userId={{userId}}&token={{verificationToken}}
+  auth: none
+}
+
+docs {
+  Manual verification flow:
+  1. Register a user via 01_register.bru - note the returned user id and set it as {{userId}}.
+  2. The registration handler emails a 6-character verification code via UserRegisteredDomainEventHandler.
+     In dev without Mailtrap credentials configured, EmailService logs a warning and skips sending -
+     check the Identity.API console/logs, or read the code directly from Redis: `evt:{userId}:{token}`.
+  3. Set {{verificationToken}} to that code and send this request.
+  4. Confirm success by calling GET /api/auth/me/verification-status (bearer auth) or 03_get_me.bru,
+     which should now show isVerified/isEmailVerified as true.
+}

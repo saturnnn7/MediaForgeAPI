@@ -2,10 +2,11 @@ using System.Globalization;
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace MediaForge.Identity.Infrastructure.Services;
 
-public sealed class EmailService(IConfiguration configuration) : IEmailService
+public sealed class EmailService(IConfiguration configuration, ILogger<EmailService> logger) : IEmailService
 {
     public Task SendVerificationEmailAsync(string email, string displayName, string verificationLink, CancellationToken ct)
     {
@@ -34,6 +35,12 @@ public sealed class EmailService(IConfiguration configuration) : IEmailService
         var username = configuration["Email:Username"]!;
         var password = configuration["Email:Password"]!;
         var from = configuration["Email:From"]!;
+
+        if (string.IsNullOrEmpty(username))
+        {
+            logger.LogWarning("Email credentials not configured. Skipping email to {Email}", toEmail);
+            return;
+        }
 
         using var client = new SmtpClient(host, port)
         {

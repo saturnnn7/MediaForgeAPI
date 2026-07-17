@@ -78,6 +78,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddSingleton<IAppSettings, AppSettings>();
 
         services.AddMassTransit(x =>
         {

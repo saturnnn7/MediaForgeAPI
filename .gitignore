@@ -486,6 +486,7 @@ $RECYCLE.BIN/
 # Local dev overrides
 infra/docker-compose.override.yml
 **/appsettings.Local.json
+**/appsettings.Development.json
 
 # Certs
 **/*.pfx

@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
 namespace MediaForge.Identity.API.Endpoints;
 
 public static class AuthEndpoints
@@ -37,6 +40,18 @@ public static class AuthEndpoints
                 ? Results.Ok()
                 : Results.BadRequest(result.Error);
         });
+
+        group.MapGet("/me/verification-status", async (ClaimsPrincipal user, IApplicationUserRepository userRepository, CancellationToken ct) =>
+        {
+            var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue("sub")!);
+            var applicationUser = await userRepository.GetByIdAsync(userId, ct);
+
+            return applicationUser is null
+                ? Results.NotFound()
+                : Results.Ok(new { isVerified = applicationUser.IsEmailVerified, email = applicationUser.Email });
+        }).RequireAuthorization(policy => policy
+            .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+            .RequireAuthenticatedUser());
 
         return app;
     }
