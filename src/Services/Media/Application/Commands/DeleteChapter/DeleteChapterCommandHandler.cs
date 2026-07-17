@@ -16,11 +16,15 @@ public sealed class DeleteChapterCommandHandler(
         if (asset.UserId != userContext.UserId)
             return Result.Failure(Error.Unauthorized("You do not have access to this media asset."));
 
+        var chapter = asset.Chapters.FirstOrDefault(c => c.Id == request.ChapterId);
+        if (chapter is null)
+            return Result.Failure(Error.NotFound("Chapter", request.ChapterId));
+
         var result = asset.RemoveChapter(request.ChapterId);
         if (result.IsFailure)
             return result;
 
-        mediaAssetRepository.Update(asset);
+        await mediaAssetRepository.DeleteChapterAsync(chapter, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

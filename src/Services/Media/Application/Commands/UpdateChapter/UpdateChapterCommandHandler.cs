@@ -28,7 +28,7 @@ public sealed class UpdateChapterCommandHandler(
         if (result.IsFailure)
             return Result.Failure<ChapterDto>(result.Error);
 
-        mediaAssetRepository.Update(asset);
+        mediaAssetRepository.UpdateChapter(chapter);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(chapter.ToDto());

@@ -7,4 +7,7 @@ public interface IMediaAssetRepository
     Task<IReadOnlyList<MediaAsset>> GetByUserIdAsync(Guid userId, int page, int pageSize, CancellationToken ct);
     Task AddAsync(MediaAsset asset, CancellationToken ct);
     void Update(MediaAsset asset);
+    Task AddChapterAsync(Chapter chapter, CancellationToken ct);
+    Task DeleteChapterAsync(Chapter chapter, CancellationToken ct);
+    void UpdateChapter(Chapter chapter);
 }

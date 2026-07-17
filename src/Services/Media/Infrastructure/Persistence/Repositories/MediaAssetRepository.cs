@@ -23,4 +23,16 @@ public sealed class MediaAssetRepository(MediaDbContext dbContext) : IMediaAsset
 
     public void Update(MediaAsset asset) =>
         dbContext.MediaAssets.Update(asset);
+
+    public async Task AddChapterAsync(Chapter chapter, CancellationToken ct) =>
+        await dbContext.Chapters.AddAsync(chapter, ct);
+
+    public Task DeleteChapterAsync(Chapter chapter, CancellationToken ct)
+    {
+        dbContext.Chapters.Remove(chapter);
+        return Task.CompletedTask;
+    }
+
+    public void UpdateChapter(Chapter chapter) =>
+        dbContext.Chapters.Update(chapter);
 }
