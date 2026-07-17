@@ -51,7 +51,7 @@ public sealed class EmailService(IConfiguration configuration) : IEmailService
         }
         catch (Exception ex)
         {
-            // Log and continue — email failure should not fail registration in dev
+            // Log and continue - email failure should not fail registration in dev
             Console.WriteLine($"[EmailService] Failed to send email to {toEmail}: {ex.Message}");
         }
     }

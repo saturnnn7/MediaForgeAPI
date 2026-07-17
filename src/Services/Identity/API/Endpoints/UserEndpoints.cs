@@ -19,7 +19,9 @@ public static class UserEndpoints
             var applicationUser = await userRepository.GetByIdAsync(userId, ct);
 
             if (applicationUser is null)
+            {
                 return Results.NotFound();
+            }
 
             return Results.Ok(new UserProfileDto(
                 applicationUser.Id,

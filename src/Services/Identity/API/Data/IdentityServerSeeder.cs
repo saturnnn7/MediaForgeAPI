@@ -16,19 +16,25 @@ public static class IdentityServerSeeder
         if (!await context.Clients.AnyAsync())
         {
             foreach (var client in GetClients())
+            {
                 context.Clients.Add(client.ToEntity());
+            }
         }
 
         if (!await context.ApiScopes.AnyAsync())
         {
             foreach (var scopeItem in GetApiScopes())
+            {
                 context.ApiScopes.Add(scopeItem.ToEntity());
+            }
         }
 
         if (!await context.IdentityResources.AnyAsync())
         {
             foreach (var resource in GetIdentityResources())
+            {
                 context.IdentityResources.Add(resource.ToEntity());
+            }
         }
 
         await context.SaveChangesAsync();

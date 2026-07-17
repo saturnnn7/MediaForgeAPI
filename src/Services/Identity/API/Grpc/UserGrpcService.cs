@@ -20,7 +20,9 @@ public sealed class UserGrpcService(IApplicationUserRepository userRepository) :
     private static UserResponse Map(ApplicationUser? user)
     {
         if (user is null)
+        {
             return new UserResponse { Found = false };
+        }
 
         return new UserResponse
         {

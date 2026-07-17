@@ -14,7 +14,10 @@ public sealed class MediaProcessingFailedConsumer(
     {
         var msg = context.Message;
         var asset = await repository.GetByIdAsync(msg.AssetId, context.CancellationToken);
-        if (asset is null) return;
+        if (asset is null)
+        {
+            return;
+        }
 
         asset.FailProcessing(msg.Reason);
         repository.Update(asset);

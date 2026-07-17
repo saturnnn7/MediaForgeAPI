@@ -11,7 +11,9 @@ public sealed class RegisterCommandHandler(
     public async Task<Result<UserProfileDto>> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
         if (await userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
+        {
             return Result.Failure<UserProfileDto>(Error.Conflict("User", "Email already registered."));
+        }
 
         var user = ApplicationUser.Create(request.Email, request.DisplayName);
         user.SetPasswordHash(passwordHasher.Hash(request.Password));

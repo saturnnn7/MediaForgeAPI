@@ -39,7 +39,9 @@ public sealed class TokenService(IConfiguration configuration, IDistributedCache
     {
         var userId = await cache.GetStringAsync($"{RefreshTokenKeyPrefix}{refreshToken}", ct);
         if (userId is null)
+        {
             return null;
+        }
 
         return Guid.Parse(userId);
     }
@@ -49,7 +51,9 @@ public sealed class TokenService(IConfiguration configuration, IDistributedCache
         var key = $"{EmailVerificationTokenKeyPrefix}{userId}:{token}";
         var value = await cache.GetStringAsync(key, ct);
         if (value is null)
+        {
             return false;
+        }
 
         await cache.RemoveAsync(key, ct);
         return true;
@@ -104,7 +108,9 @@ public sealed class TokenService(IConfiguration configuration, IDistributedCache
         var bytes = RandomNumberGenerator.GetBytes(length);
         var builder = new StringBuilder(length);
         foreach (var b in bytes)
+        {
             builder.Append(VerificationTokenAlphabet[b % VerificationTokenAlphabet.Length]);
+        }
 
         return builder.ToString();
     }

@@ -38,7 +38,9 @@ public sealed class ApplicationUser : AggregateRoot
     public Result VerifyEmail()
     {
         if (IsEmailVerified)
+        {
             return Result.Failure(Error.Conflict("User", "Email is already verified."));
+        }
 
         IsEmailVerified = true;
         RaiseDomainEvent(new UserEmailVerifiedDomainEvent(Id, Email));
@@ -56,7 +58,9 @@ public sealed class ApplicationUser : AggregateRoot
     {
         var refreshToken = _refreshTokens.SingleOrDefault(t => t.Token == token);
         if (refreshToken is null)
+        {
             return Result.Failure(Error.Validation("Token", "Refresh token not found."));
+        }
 
         refreshToken.Revoke();
         return Result.Success();

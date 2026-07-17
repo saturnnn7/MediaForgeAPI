@@ -12,11 +12,15 @@ public sealed class RefreshTokenCommandHandler(
     {
         var userId = await tokenService.ValidateRefreshTokenAsync(request.RefreshToken, cancellationToken);
         if (userId is null)
+        {
             return Result.Failure<TokensDto>(Error.Validation("RefreshToken", "Invalid or expired."));
+        }
 
         var user = await userRepository.GetByIdAsync(userId.Value, cancellationToken);
         if (user is null)
+        {
             return Result.Failure<TokensDto>(Error.Validation("RefreshToken", "Invalid or expired."));
+        }
 
         user.RevokeRefreshToken(request.RefreshToken);
 

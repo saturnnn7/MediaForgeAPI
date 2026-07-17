@@ -13,10 +13,14 @@ public sealed class LoginCommandHandler(
     {
         var user = await userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user is null)
+        {
             return Result.Failure<TokensDto>(Error.Validation("Email", "Invalid credentials."));
+        }
 
         if (!passwordHasher.Verify(request.Password, user.PasswordHash))
+        {
             return Result.Failure<TokensDto>(Error.Validation("Password", "Invalid credentials."));
+        }
 
         var tokens = await tokenService.GenerateTokensAsync(user, cancellationToken);
 

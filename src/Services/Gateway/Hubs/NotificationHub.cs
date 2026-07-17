@@ -6,7 +6,9 @@ public sealed class NotificationHub : Hub
     {
         var userId = Context.User?.FindFirst("sub")?.Value;
         if (!string.IsNullOrEmpty(userId))
+        {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"user:{userId}");
+        }
 
         await base.OnConnectedAsync();
     }
@@ -15,7 +17,9 @@ public sealed class NotificationHub : Hub
     {
         var userId = Context.User?.FindFirst("sub")?.Value;
         if (!string.IsNullOrEmpty(userId))
+        {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user:{userId}");
+        }
 
         await base.OnDisconnectedAsync(exception);
     }

@@ -28,22 +28,30 @@ public sealed class MinioInitializer(IAmazonS3 s3, ILogger<MinioInitializer> log
 
                 if (bucket == "mediaforge-processed")
                 {
-                    await s3.PutBucketPolicyAsync(new PutBucketPolicyRequest
+                    logger.LogInformation("Applying public read policy to bucket: {Bucket}", bucket);
+                    try
                     {
-                        BucketName = bucket,
-                        Policy = """
+                        await s3.PutBucketPolicyAsync(new PutBucketPolicyRequest
                         {
-                          "Version": "2012-10-17",
-                          "Statement": [{
-                            "Effect": "Allow",
-                            "Principal": {"AWS": ["*"]},
-                            "Action": ["s3:GetObject"],
-                            "Resource": ["arn:aws:s3:::mediaforge-processed/*"]
-                          }]
-                        }
-                        """
-                    }, cancellationToken);
-                    logger.LogInformation("Applied public read policy to bucket: {Bucket}", bucket);
+                            BucketName = bucket,
+                            Policy = """
+                            {
+                              "Version": "2012-10-17",
+                              "Statement": [{
+                                "Effect": "Allow",
+                                "Principal": {"AWS": ["*"]},
+                                "Action": ["s3:GetObject"],
+                                "Resource": ["arn:aws:s3:::mediaforge-processed/*"]
+                              }]
+                            }
+                            """
+                        }, cancellationToken);
+                        logger.LogInformation("Applied public read policy to bucket: {Bucket}", bucket);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to apply public read policy to bucket {Bucket}: {Error}", bucket, ex.Message);
+                    }
                 }
             }
             catch (Exception ex)
