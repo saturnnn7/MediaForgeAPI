@@ -5,7 +5,7 @@ namespace MediaForge.Media.Domain.Entities;
 
 public sealed class MediaAsset : AggregateRoot
 {
-    private const long MaxFileSizeBytes = 2_147_483_648L;
+    private const long MaxFileSizeBytes = 10_737_418_240L;
 
     private readonly List<string> _outputUrls = [];
 
@@ -38,7 +38,7 @@ public sealed class MediaAsset : AggregateRoot
     {
         if (fileSizeBytes > MaxFileSizeBytes)
         {
-            return Result.Failure<MediaAsset>(Error.Validation("FileSizeBytes", "File size exceeds the 2GB limit."));
+            return Result.Failure<MediaAsset>(Error.Validation("FileSizeBytes", "File size exceeds the 10GB limit."));
         }
 
         var asset = new MediaAsset
@@ -109,6 +109,13 @@ public sealed class MediaAsset : AggregateRoot
     {
         Status = MediaAssetStatus.Failed;
         RaiseDomainEvent(new MediaAssetProcessingFailedDomainEvent(Id, UserId, reason));
+
+        return Result.Success();
+    }
+
+    public Result Cancel()
+    {
+        Status = MediaAssetStatus.Cancelled;
 
         return Result.Success();
     }

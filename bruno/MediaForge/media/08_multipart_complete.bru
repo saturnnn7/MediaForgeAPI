@@ -1,0 +1,25 @@
+meta {
+  name: Multipart Complete
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/media/multipart/complete
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "assetId": "{{assetId}}",
+    "uploadId": "{{uploadId}}",
+    "parts": [
+      { "partNumber": 1, "eTag": "\"replace-with-etag-from-part-upload\"" }
+    ]
+  }
+}

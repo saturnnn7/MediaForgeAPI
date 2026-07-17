@@ -40,6 +40,38 @@ public static class MediaEndpoints
             return ToHttpResult(result);
         });
 
+        group.MapPost("/multipart/initiate", async (InitiateMultipartUploadCommand command, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.Created($"/api/media/{result.Value.AssetId}", result.Value)
+                : ToHttpResult(result);
+        });
+
+        group.MapPost("/multipart/part-url", async (GeneratePartUrlCommand command, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.Ok(new { url = result.Value })
+                : ToHttpResult(result);
+        });
+
+        group.MapPost("/multipart/complete", async (CompleteMultipartUploadCommand command, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.Accepted(value: result.Value)
+                : ToHttpResult(result);
+        });
+
+        group.MapPost("/multipart/abort", async (AbortMultipartUploadCommand command, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.NoContent()
+                : ToHttpResult(result);
+        });
+
         return app;
     }
 

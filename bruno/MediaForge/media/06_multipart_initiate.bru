@@ -1,0 +1,32 @@
+meta {
+  name: Multipart Initiate
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/media/multipart/initiate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "fileName": "large-video.mp4",
+    "contentType": "video/mp4",
+    "fileSizeBytes": 524288000
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("assetId", res.body.assetId);
+    bru.setVar("uploadId", res.body.uploadId);
+    console.log("Asset ID:", res.body.assetId);
+    console.log("Upload ID:", res.body.uploadId);
+  }
+}

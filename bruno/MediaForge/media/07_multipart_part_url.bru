@@ -1,0 +1,30 @@
+meta {
+  name: Multipart Part URL
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/media/multipart/part-url
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "assetId": "{{assetId}}",
+    "uploadId": "{{uploadId}}",
+    "partNumber": 1
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setVar("partUrl", res.body.url);
+    console.log("Part URL:", res.body.url);
+  }
+}

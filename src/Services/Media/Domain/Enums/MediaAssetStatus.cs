@@ -7,5 +7,6 @@ public enum MediaAssetStatus
     ProcessingQueued,
     Processing,
     Completed,
-    Failed
+    Failed,
+    Cancelled
 }
