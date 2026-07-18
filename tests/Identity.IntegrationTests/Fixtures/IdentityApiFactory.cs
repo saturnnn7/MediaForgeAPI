@@ -6,6 +6,7 @@ using Duende.IdentityServer.EntityFramework.DbContexts;
 using MediaForge.Identity.API.Data;
 using MediaForge.Identity.Application.Abstractions;
 using MediaForge.Identity.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -68,6 +69,12 @@ public sealed class IdentityApiFactory(DatabaseFixture fixture) : WebApplication
                 && d.ImplementationType?.Name == "TokenCleanupHost");
             if (tokenCleanupDescriptor != null)
                 services.Remove(tokenCleanupDescriptor);
+
+            services.PostConfigure<GoogleOptions>(GoogleDefaults.AuthenticationScheme, opts =>
+            {
+                opts.ClientId = "test-client-id";
+                opts.ClientSecret = "test-client-secret";
+            });
         });
     }
 

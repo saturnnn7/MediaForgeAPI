@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,12 +27,17 @@ public sealed class GatewayFactory(RabbitMqFixture fixture) : WebApplicationFact
 
         builder.ConfigureServices(services =>
         {
-            var redisDescriptor = services.SingleOrDefault(d =>
-                d.ServiceType.FullName != null &&
-                d.ServiceType.FullName.Contains("Redis"));
-            if (redisDescriptor != null)
+            // Program.cs wires SignalR to a Redis backplane, which isn't available in the test
+            // environment. Remove the Redis HubLifetimeManager registration (AddSignalR's own
+            // registration uses TryAdd, so it won't replace an existing one) to fall back to the
+            // default in-process lifetime manager.
+            var redisDescriptors = services
+                .Where(d => d.ServiceType == typeof(HubLifetimeManager<>)
+                    || (d.ServiceType.FullName != null && d.ServiceType.FullName.Contains("Redis")))
+                .ToList();
+            foreach (var descriptor in redisDescriptors)
             {
-                services.Remove(redisDescriptor);
+                services.Remove(descriptor);
             }
 
             services.AddSignalR();

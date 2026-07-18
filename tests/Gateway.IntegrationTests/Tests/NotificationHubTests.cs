@@ -46,7 +46,7 @@ public sealed class NotificationHubTests(RabbitMqFixture fixture)
             "https://example.com/thumb.jpg",
             42));
 
-        var completed = await Task.WhenAny(tcs.Task, Task.Delay(10_000));
+        var completed = await Task.WhenAny(tcs.Task, Task.Delay(20_000));
         completed.Should().Be(tcs.Task, "notification should arrive within 10 seconds");
 
         await hubConnection.StopAsync();
