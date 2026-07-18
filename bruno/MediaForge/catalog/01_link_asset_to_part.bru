@@ -1,0 +1,22 @@
+meta {
+  name: Link Asset to Part
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/parts/{{partId}}/assets
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "mediaAssetId": "{{assetId}}",
+    "sequenceOrder": 1
+  }
+}

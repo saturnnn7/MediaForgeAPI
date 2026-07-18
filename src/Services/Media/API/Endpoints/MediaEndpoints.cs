@@ -108,6 +108,12 @@ public static class MediaEndpoints
             return ToHttpResult(result);
         });
 
+        group.MapPatch("/{assetId:guid}/part", async (Guid assetId, SetPartRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new SetPartCommand(assetId, request.PartId), ct);
+            return ToHttpResult(result);
+        });
+
         return app;
     }
 
@@ -126,4 +132,6 @@ public static class MediaEndpoints
     private sealed record AddChapterRequest(string Title, double StartTimeSeconds, int Order, double? EndTimeSeconds);
 
     private sealed record UpdateChapterRequest(string Title, double StartTimeSeconds, double? EndTimeSeconds);
+
+    private sealed record SetPartRequest(Guid PartId);
 }

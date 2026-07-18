@@ -27,6 +27,7 @@ public sealed class MediaAsset : AggregateRoot
     public double? DurationSeconds { get; private set; }
     public DateTime CreatedAt { get; init; }
     public DateTime? ProcessingCompletedAt { get; private set; }
+    public Guid? PartId { get; private set; }
 
     public IReadOnlyList<string> OutputUrls => _outputUrls.AsReadOnly();
     public IReadOnlyList<Chapter> Chapters => _chapters.AsReadOnly();
@@ -131,6 +132,8 @@ public sealed class MediaAsset : AggregateRoot
 
         return Result.Success();
     }
+
+    public void SetPartId(Guid partId) => PartId = partId;
 
     public Result QueueForProcessing()
     {

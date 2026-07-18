@@ -80,6 +80,10 @@ public sealed class MediaAssetConfiguration : IEntityTypeConfiguration<MediaAsse
             .HasColumnName("processing_completed_at")
             .IsRequired(false);
 
+        builder.Property(x => x.PartId)
+            .HasColumnName("part_id")
+            .IsRequired(false);
+
         builder.Property<List<string>>("_outputUrls")
             .HasColumnName("output_urls")
             .HasColumnType("jsonb")

@@ -8,7 +8,8 @@ public sealed record StreamingUrlsDto(
     double DurationSeconds,
     string? WaveformUrl,
     IReadOnlyList<ChapterDto> Chapters,
-    IReadOnlyList<string> OutputUrls);
+    IReadOnlyList<string> OutputUrls,
+    Guid? PartId);
 
 public sealed record StreamingVariantDto(
     int Height,
