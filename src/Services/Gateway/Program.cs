@@ -1,6 +1,7 @@
 using MediaForge.Gateway.YARP.Consumers;
 using MediaForge.Gateway.YARP.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 using StackExchange.Redis;
@@ -92,6 +93,13 @@ builder.Services.AddCors(opts =>
     });
 });
 
+builder.Services.AddHealthChecks()
+    .AddRedis(redisConn, name: "redis", tags: ["cache"])
+    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMq")!,
+                 name: "rabbitmq", tags: ["messaging"])
+    .AddUrlGroup(new Uri("http://localhost:5001/health/live"), name: "identity-api", tags: ["upstream"])
+    .AddUrlGroup(new Uri("http://localhost:5002/health/live"), name: "media-api", tags: ["upstream"]);
+
 var app = builder.Build();
 
 app.UseRateLimiter();
@@ -104,7 +112,36 @@ app.MapHub<NotificationHub>("/hubs/notifications")
    .RequireAuthorization();
 
 app.MapReverseProxy();
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "gateway" }));
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = new
+        {
+            status = report.Status.ToString(),
+            service = "gateway",
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                duration = e.Value.Duration.TotalMilliseconds
+            })
+        };
+        await context.Response.WriteAsJsonAsync(result);
+    }
+});
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false
+});
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("cache") || check.Tags.Contains("messaging")
+});
 
 app.Run();
 

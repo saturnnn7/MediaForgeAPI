@@ -14,12 +14,16 @@ public static class ServiceCollectionExtensions
     {
         var provider = configuration["Search:Provider"] ?? "inmemory";
 
+        var healthChecksBuilder = services.AddHealthChecks()
+            .AddRabbitMQ(rabbitConnectionString: configuration.GetConnectionString("RabbitMq")!, name: "rabbitmq", tags: ["messaging"]);
+
         if (provider == "elasticsearch")
         {
             var url = configuration["Search:ElasticsearchUrl"] ?? "http://localhost:9200";
             services.AddSingleton(new ElasticsearchClient(new Uri(url)));
             services.AddScoped<ISearchService, ElasticsearchSearchService>();
             services.AddHostedService<ElasticsearchIndexInitializer>();
+            healthChecksBuilder.AddElasticsearch(url, name: "elasticsearch", tags: ["search"]);
         }
         else
         {

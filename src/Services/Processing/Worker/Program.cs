@@ -3,10 +3,17 @@ using Amazon.Runtime;
 using Amazon.S3;
 using MediaForge.Processing.Worker.Consumers;
 using MediaForge.Processing.Worker.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using OpenAI;
 using Serilog;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<IAmazonS3>(_ => new AmazonS3Client(
     new BasicAWSCredentials(
@@ -59,5 +66,37 @@ FFMpegCore.GlobalFFOptions.Configure(opts =>
 builder.Logging.ClearProviders();
 builder.Services.AddSerilog(cfg => cfg.WriteTo.Console(formatProvider: CultureInfo.InvariantCulture));
 
-var host = builder.Build();
-await host.RunAsync();
+builder.Services.AddHealthChecks()
+    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMq")!,
+                 name: "rabbitmq", tags: ["messaging"]);
+
+builder.WebHost.UseUrls("http://localhost:5004");
+
+var app = builder.Build();
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = new
+        {
+            status = report.Status.ToString(),
+            service = "processing-worker",
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                duration = e.Value.Duration.TotalMilliseconds
+            })
+        };
+        await context.Response.WriteAsJsonAsync(result);
+    }
+});
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false
+});
+
+await app.RunAsync();

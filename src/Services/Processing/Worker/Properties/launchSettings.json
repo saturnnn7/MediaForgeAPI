@@ -3,6 +3,7 @@
     "Processing.Worker": {
       "commandName": "Project",
       "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5004",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }

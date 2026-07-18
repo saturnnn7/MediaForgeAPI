@@ -78,6 +78,14 @@ public static class ServiceCollectionExtensions
                 .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                 .RequireAssertion(_ => true));
 
+        services.AddHealthChecks()
+            .AddNpgSql(configuration.GetConnectionString("IdentityDb")!,
+                       name: "postgres", tags: ["db"])
+            .AddRedis(configuration.GetConnectionString("Redis")!,
+                      name: "redis", tags: ["cache"])
+            .AddRabbitMQ(rabbitConnectionString: configuration.GetConnectionString("RabbitMq")!,
+                         name: "rabbitmq", tags: ["messaging"]);
+
         services.AddStackExchangeRedisCache(opts => opts.Configuration = configuration.GetConnectionString("Redis"));
 
         services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();

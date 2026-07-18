@@ -4,6 +4,7 @@ using MediaForge.Media.API.Grpc;
 using MediaForge.Media.Application.Abstractions;
 using MediaForge.Media.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 
@@ -43,6 +44,18 @@ public static class ServiceCollectionExtensions
         services.AddAuthorization();
 
         services.AddValidatorsFromAssembly(typeof(RequestUploadUrlCommand).Assembly);
+
+        services.AddHealthChecks()
+            .AddNpgSql(configuration.GetConnectionString("MediaDb")!, name: "postgres", tags: ["db"])
+            .AddRedis(configuration.GetConnectionString("Redis")!, name: "redis", tags: ["cache"])
+            .AddRabbitMQ(rabbitConnectionString: configuration.GetConnectionString("RabbitMq")!, name: "rabbitmq", tags: ["messaging"])
+            .AddCheck("minio", () =>
+            {
+                var url = configuration["Storage:ServiceUrl"];
+                return !string.IsNullOrEmpty(url)
+                    ? HealthCheckResult.Healthy($"MinIO configured at {url}")
+                    : HealthCheckResult.Unhealthy("MinIO not configured");
+            }, tags: ["storage"]);
 
         return services;
     }
