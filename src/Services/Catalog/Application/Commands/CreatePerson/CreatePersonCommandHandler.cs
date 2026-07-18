@@ -25,11 +25,12 @@ public sealed class CreatePersonCommandHandler(
         }
 
         await personRepository.AddAsync(person, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await publishEndpoint.Publish(
             new PersonCreatedEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid(), person.Id, person.Name, person.Bio, person.PhotoUrl),
             cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(person.ToDto());
     }

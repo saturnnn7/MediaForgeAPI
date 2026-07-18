@@ -17,11 +17,12 @@ public sealed class UnpublishWorkCommandHandler(
         work.Unpublish();
 
         workRepository.Update(work);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await publishEndpoint.Publish(
             new WorkUnpublishedEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid(), work.Id),
             cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }

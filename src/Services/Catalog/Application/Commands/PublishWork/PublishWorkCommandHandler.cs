@@ -20,7 +20,6 @@ public sealed class PublishWorkCommandHandler(
             return publishResult;
 
         workRepository.Update(work);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var contributors = await workRepository.GetContributorsWithPersonsAsync(work.Id, cancellationToken);
         var contributorNames = contributors.Select(x => x.Person.Name).ToList();
@@ -49,6 +48,8 @@ public sealed class PublishWorkCommandHandler(
                 contributorNames,
                 genreNames),
             cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }

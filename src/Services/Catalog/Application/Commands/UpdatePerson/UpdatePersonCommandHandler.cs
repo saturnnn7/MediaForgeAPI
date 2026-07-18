@@ -20,11 +20,12 @@ public sealed class UpdatePersonCommandHandler(
             return Result.Failure<PersonDto>(updateResult.Error);
 
         personRepository.Update(person);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await publishEndpoint.Publish(
             new PersonUpdatedEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid(), person.Id, person.Name, person.Bio, person.PhotoUrl),
             cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(person.ToDto());
     }
