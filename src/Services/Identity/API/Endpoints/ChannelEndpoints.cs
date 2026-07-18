@@ -54,7 +54,7 @@ public static class ChannelEndpoints
             return result.IsSuccess
                 ? Results.Ok(result.Value)
                 : Results.NotFound(result.Error);
-        });
+        }).RequireAuthorization("OptionalAuth");
 
         group.MapPost("/{channelId:guid}/subscribe", async (Guid channelId, ISender sender, CancellationToken ct) =>
         {

@@ -73,7 +73,10 @@ public static class ServiceCollectionExtensions
 
         services.AddAuthorizationBuilder()
             .AddPolicy("CreatorOnly", p => p.RequireClaim("role", "creator"))
-            .AddPolicy("AdminOnly", p => p.RequireClaim("role", "admin"));
+            .AddPolicy("AdminOnly", p => p.RequireClaim("role", "admin"))
+            .AddPolicy("OptionalAuth", p => p
+                .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                .RequireAssertion(_ => true));
 
         services.AddStackExchangeRedisCache(opts => opts.Configuration = configuration.GetConnectionString("Redis"));
 
