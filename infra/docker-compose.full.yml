@@ -13,6 +13,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./pg-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mediaforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -22,6 +27,11 @@ services:
     image: redis:7.4-alpine
     container_name: mf-redis
     ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -36,6 +46,11 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -53,6 +68,11 @@ services:
       - "9001:9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -74,6 +94,23 @@ services:
         limits:
           memory: 1g
 
+  keygen:
+    image: alpine/openssl
+    container_name: mf-keygen
+    volumes:
+      - identity_keys:/keys
+    command: >
+      sh -c "
+        if [ ! -f /keys/private.pem ]; then
+          openssl genrsa -out /keys/private.pem 2048 &&
+          openssl rsa -in /keys/private.pem -pubout -out /keys/public.pem &&
+          echo 'Keys generated'
+        else
+          echo 'Keys already exist'
+        fi
+      "
+    restart: "no"
+
   # ── .NET Services ───────────────────────────────────────────────────
   identity-api:
     build:
@@ -82,7 +119,7 @@ services:
     container_name: mf-identity-api
     ports: ["5001:8080"]
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__IdentityDb: "Host=postgres;Port=5432;Database=identity;Username=mediaforge;Password=mediaforge_dev"
       ConnectionStrings__Redis: "redis:6379"
       ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
@@ -96,11 +133,16 @@ services:
       Email__Port: "587"
       Email__From: "noreply@mediaforge.local"
     volumes:
-      - ../src/Services/Identity/API/keys:/app/keys:ro
+      - identity_keys:/app/keys:ro
     depends_on:
-      - postgres
-      - redis
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keygen:
+        condition: service_completed_successfully
     deploy:
       resources:
         limits:
@@ -113,7 +155,7 @@ services:
     container_name: mf-media-api
     ports: ["5002:8080"]
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__MediaDb: "Host=postgres;Port=5432;Database=media;Username=mediaforge;Password=mediaforge_dev"
       ConnectionStrings__Redis: "redis:6379"
       ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
@@ -125,11 +167,18 @@ services:
       Storage__SecretKey: "mediaforge_dev_s3cret"
       RabbitMq__Username: "mediaforge"
       RabbitMq__Password: "mediaforge_dev"
+      Jwt__PublicKeyPath: "/app/keys/public.pem"
+    volumes:
+      - identity_keys:/app/keys:ro
     depends_on:
-      - postgres
-      - rabbitmq
-      - minio
-      - identity-api
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      identity-api:
+        condition: service_started
     deploy:
       resources:
         limits:
@@ -141,6 +190,7 @@ services:
       dockerfile: src/Services/Processing/Worker/Dockerfile
     container_name: mf-processing-worker
     environment:
+      ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
       Storage__ServiceUrl: "http://minio:9000"
       Storage__AccessKey: "mediaforge"
@@ -150,8 +200,10 @@ services:
       RabbitMq__Username: "mediaforge"
       RabbitMq__Password: "mediaforge_dev"
     depends_on:
-      - rabbitmq
-      - minio
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -164,6 +216,7 @@ services:
     container_name: mf-search-api
     ports: ["5003:8080"]
     environment:
+      ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
       IdentityServer__Authority: "http://identity-api:8080"
       IdentityServer__Audience: "search.read"
@@ -171,8 +224,10 @@ services:
       RabbitMq__Username: "mediaforge"
       RabbitMq__Password: "mediaforge_dev"
     depends_on:
-      - rabbitmq
-      - identity-api
+      rabbitmq:
+        condition: service_healthy
+      identity-api:
+        condition: service_started
     deploy:
       resources:
         limits:
@@ -185,6 +240,7 @@ services:
     container_name: mf-gateway
     ports: ["5000:8080"]
     environment:
+      ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__Redis: "redis:6379"
       ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
       IdentityServer__Authority: "http://identity-api:8080"
@@ -194,11 +250,16 @@ services:
       ReverseProxy__Clusters__media-cluster__Destinations__media-api__Address: "http://media-api:8080"
       ReverseProxy__Clusters__search-cluster__Destinations__search-api__Address: "http://search-api:8080"
     depends_on:
-      - redis
-      - rabbitmq
-      - identity-api
-      - media-api
-      - search-api
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      identity-api:
+        condition: service_started
+      media-api:
+        condition: service_started
+      search-api:
+        condition: service_started
     deploy:
       resources:
         limits:
@@ -208,3 +269,4 @@ volumes:
   postgres_data:
   minio_data:
   es_data:
+  identity_keys:

@@ -1,6 +1,8 @@
 using System.Globalization;
 using MediaForge.Media.API.DependencyInjection;
 using MediaForge.Media.API.Endpoints;
+using MediaForge.Media.Infrastructure.Persistence;
+using MediaForge.Shared.Infrastructure.Migrations;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 
@@ -56,6 +58,12 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("db") || check.Tags.Contains("cache")
 });
+
+if (app.Environment.IsProduction() || app.Environment.IsEnvironment("Docker"))
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    await MigrationRunner.RunMigrationsAsync<MediaDbContext>(app.Services, logger);
+}
 
 app.Run();
 

@@ -3,8 +3,11 @@ using MediaForge.Identity.API.Data;
 using MediaForge.Identity.API.DependencyInjection;
 using MediaForge.Identity.API.Endpoints;
 using MediaForge.Identity.API.Grpc;
+using MediaForge.Identity.Infrastructure.Persistence;
+using MediaForge.Shared.Infrastructure.Migrations;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Duende.IdentityServer.EntityFramework.DbContexts;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -72,6 +75,15 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 if (app.Environment.IsDevelopment())
 {
+    await IdentityServerSeeder.SeedAsync(app.Services);
+}
+
+if (app.Environment.IsProduction() || app.Environment.IsEnvironment("Docker"))
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    await MigrationRunner.RunMigrationsAsync<IdentityDbContext>(app.Services, logger);
+    await MigrationRunner.RunMigrationsAsync<ConfigurationDbContext>(app.Services, logger);
+    await MigrationRunner.RunMigrationsAsync<PersistedGrantDbContext>(app.Services, logger);
     await IdentityServerSeeder.SeedAsync(app.Services);
 }
 
