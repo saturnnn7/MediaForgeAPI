@@ -64,8 +64,14 @@ builder.Services.AddMassTransit(x =>
 FFMpegCore.GlobalFFOptions.Configure(opts =>
     opts.BinaryFolder = builder.Configuration["FFmpeg:BinaryPath"] ?? string.Empty);
 
-builder.Logging.ClearProviders();
-builder.Services.AddSerilog(cfg => cfg.WriteTo.Console(formatProvider: CultureInfo.InvariantCulture));
+builder.Host.UseSerilog((ctx, cfg) =>
+{
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+       .WriteTo.Seq(ctx.Configuration["Seq:Url"] ?? "http://localhost:5341")
+       .Enrich.WithProperty("Service", "processing-worker")
+       .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName);
+});
 
 builder.Services.AddHealthChecks()
     .AddRabbitMqCheck(builder.Configuration.GetConnectionString("RabbitMq")!, tags: ["messaging"]);
@@ -73,6 +79,11 @@ builder.Services.AddHealthChecks()
 builder.WebHost.UseUrls("http://localhost:5004");
 
 var app = builder.Build();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.MessageTemplate =
+        "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

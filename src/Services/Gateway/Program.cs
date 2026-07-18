@@ -1,13 +1,25 @@
+using System.Globalization;
 using MediaForge.Gateway.YARP.Consumers;
 using MediaForge.Gateway.YARP.Hubs;
 using MediaForge.Shared.Infrastructure.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, cfg) =>
+{
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+       .WriteTo.Seq(ctx.Configuration["Seq:Url"] ?? "http://localhost:5341")
+       .Enrich.WithProperty("Service", "gateway")
+       .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName);
+});
 
 // YARP
 builder.Services.AddReverseProxy()
@@ -79,9 +91,6 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-builder.Services.AddSerilog(cfg => cfg.WriteTo.Console(
-    formatProvider: System.Globalization.CultureInfo.InvariantCulture));
-
 builder.Services.AddCors(opts =>
 {
     opts.AddDefaultPolicy(policy =>
@@ -100,7 +109,23 @@ builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri("http://localhost:5001/health/live"), name: "identity-api", tags: ["upstream"])
     .AddUrlGroup(new Uri("http://localhost:5002/health/live"), name: "media-api", tags: ["upstream"]);
 
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .SetResourceBuilder(ResourceBuilder.CreateDefault()
+            .AddService("gateway"))
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(opts =>
+            opts.Endpoint = new Uri(
+                builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317")));
+
 var app = builder.Build();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.MessageTemplate =
+        "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 
 app.UseRateLimiter();
 app.UseCors();

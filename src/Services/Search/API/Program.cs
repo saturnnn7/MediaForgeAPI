@@ -1,11 +1,25 @@
+using System.Globalization;
 using FluentValidation;
 using MediaForge.Search.API.Endpoints;
 using MediaForge.Search.Application.Queries.SearchMedia;
 using MediaForge.Search.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, cfg) =>
+{
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+       .WriteTo.Seq(ctx.Configuration["Seq:Url"] ?? "http://localhost:5341")
+       .Enrich.WithProperty("Service", "search")
+       .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName);
+});
+
 builder.Services.AddSearchInfrastructure(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
@@ -17,7 +31,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddValidatorsFromAssembly(typeof(SearchMediaQuery).Assembly);
 
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .SetResourceBuilder(ResourceBuilder.CreateDefault()
+            .AddService("search"))
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(opts =>
+            opts.Endpoint = new Uri(
+                builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317")));
+
 var app = builder.Build();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.MessageTemplate =
+        "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapSearchEndpoints();

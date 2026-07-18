@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace MediaForge.Media.API.DependencyInjection;
 
@@ -57,6 +59,17 @@ public static class ServiceCollectionExtensions
                     ? HealthCheckResult.Healthy($"MinIO configured at {url}")
                     : HealthCheckResult.Unhealthy("MinIO not configured");
             }, tags: ["storage"]);
+
+        services.AddOpenTelemetry()
+            .WithTracing(tracing => tracing
+                .SetResourceBuilder(ResourceBuilder.CreateDefault()
+                    .AddService("media"))
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddEntityFrameworkCoreInstrumentation()
+                .AddOtlpExporter(opts =>
+                    opts.Endpoint = new Uri(
+                        configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317")));
 
         return services;
     }

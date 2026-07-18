@@ -1,11 +1,23 @@
+using System.Globalization;
 using MediaForge.Identity.API.Data;
 using MediaForge.Identity.API.DependencyInjection;
 using MediaForge.Identity.API.Endpoints;
 using MediaForge.Identity.API.Grpc;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, cfg) =>
+{
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+       .WriteTo.Seq(ctx.Configuration["Seq:Url"] ?? "http://localhost:5341")
+       .Enrich.WithProperty("Service", "identity")
+       .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName);
+});
+
 builder.Services.AddIdentityServices(builder.Configuration);
 
 // builder.WebHost.ConfigureKestrel(opts =>
@@ -14,6 +26,11 @@ builder.Services.AddIdentityServices(builder.Configuration);
 // });
 
 var app = builder.Build();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.MessageTemplate =
+        "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 app.UseRouting();
 app.UseIdentityServer();
 app.UseAuthentication();

@@ -73,7 +73,24 @@ services:
         limits:
           memory: 1g
 
+  seq:
+    image: datalust/seq:latest
+    container_name: mf-seq
+    environment:
+      ACCEPT_EULA: Y
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
+    ports:
+      - "5341:5341"   # ingestion port
+      - "8081:80"     # UI port
+    volumes:
+      - seq_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
 volumes:
   postgres_data:
   minio_data:
   es_data:
+  seq_data:

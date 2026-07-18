@@ -1,11 +1,28 @@
+using System.Globalization;
 using MediaForge.Media.API.DependencyInjection;
 using MediaForge.Media.API.Endpoints;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, cfg) =>
+{
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+       .WriteTo.Seq(ctx.Configuration["Seq:Url"] ?? "http://localhost:5341")
+       .Enrich.WithProperty("Service", "media")
+       .Enrich.WithProperty("Environment", ctx.HostingEnvironment.EnvironmentName);
+});
+
 builder.Services.AddMediaServices(builder.Configuration);
 
 var app = builder.Build();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.MessageTemplate =
+        "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapMediaEndpoints();

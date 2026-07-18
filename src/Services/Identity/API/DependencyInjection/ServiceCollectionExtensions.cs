@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace MediaForge.Identity.API.DependencyInjection;
 
@@ -119,6 +121,17 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddGrpc();
+
+        services.AddOpenTelemetry()
+            .WithTracing(tracing => tracing
+                .SetResourceBuilder(ResourceBuilder.CreateDefault()
+                    .AddService("identity"))
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddEntityFrameworkCoreInstrumentation()
+                .AddOtlpExporter(opts =>
+                    opts.Endpoint = new Uri(
+                        configuration["OpenTelemetry:OtlpEndpoint"] ?? "http://localhost:4317")));
 
         return services;
     }
