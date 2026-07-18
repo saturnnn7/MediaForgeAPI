@@ -14,6 +14,7 @@ COPY ["global.json", "."]
 
 # Copy csproj files for this service's dependency graph
 COPY ["src/Shared/Contracts/MediaForge.Shared.Contracts.csproj", "src/Shared/Contracts/"]
+COPY ["src/Shared/Infrastructure/MediaForge.Shared.Infrastructure.csproj", "src/Shared/Infrastructure/"]
 COPY ["src/Services/Gateway/MediaForge.Gateway.YARP.csproj", "src/Services/Gateway/"]
 
 RUN dotnet restore "src/Services/Gateway/MediaForge.Gateway.YARP.csproj"
