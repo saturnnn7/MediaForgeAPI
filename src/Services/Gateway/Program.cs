@@ -106,8 +106,10 @@ builder.Services.AddCors(opts =>
 builder.Services.AddHealthChecks()
     .AddRedis(redisConn, name: "redis", tags: ["cache"])
     .AddRabbitMqCheck(builder.Configuration.GetConnectionString("RabbitMq")!, tags: ["messaging"])
-    .AddUrlGroup(new Uri("http://localhost:5001/health/live"), name: "identity-api", tags: ["upstream"])
-    .AddUrlGroup(new Uri("http://localhost:5002/health/live"), name: "media-api", tags: ["upstream"]);
+    .AddUrlGroup(new Uri(builder.Configuration["HealthChecks:IdentityApiUrl"]
+                 ?? "http://localhost:5001/health/live"), name: "identity-api", tags: ["upstream"])
+    .AddUrlGroup(new Uri(builder.Configuration["HealthChecks:MediaApiUrl"]
+                 ?? "http://localhost:5002/health/live"), name: "media-api", tags: ["upstream"]);
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
