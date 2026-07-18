@@ -9,15 +9,15 @@ B2B SaaS platform for podcast and video-blogging. Users upload media files direc
 ## Architecture
 
 ```
-Client → Gateway.YARP → Identity.API / Media.API / Search.API / Catalog.API
+[Client] → [Gateway:5000] → [Identity.API:5001]
+                          → [Media.API:5002]
+                          → [Search.API:5003]
+                          → [Catalog.API:5005]
 
-Media.API → MinIO (pre-signed upload)
-Media.API → RabbitMQ → Processing.Worker → FFmpeg → MinIO
-Processing.Worker → MediaProcessingCompletedEvent → RabbitMQ
-Gateway.YARP → SignalR → Client (real-time notification)
-Search.API → Elasticsearch (indexes transcription + metadata)
-Catalog.API → PostgreSQL (catalog DB)
-Media.API ←→ Catalog.API (PartId cross-reference, no direct HTTP calls)
+[Media.API] → [MinIO] (pre-signed upload)
+[Media.API] → [RabbitMQ] → [Processing.Worker]
+[Catalog.API] → [RabbitMQ] → [Search.API] (index works/persons)
+[Media.API ←→ Catalog.API] (PartId cross-reference, no direct HTTP)
 ```
 
 ## Services
@@ -29,7 +29,7 @@ Media.API ←→ Catalog.API (PartId cross-reference, no direct HTTP calls)
 | Media.API | 5002 | Media asset management, pre-signed URL generation, gRPC client |
 | Processing.Worker | - | FFmpeg transcoding, Whisper transcription, MinIO upload |
 | Search.API | 5003 | Elasticsearch indexing and full-text search |
-| Catalog.API | 5005 | Series, Works, Parts, Persons, Genres catalog |
+| Catalog.API | 5005 | Series, Works, Parts, Persons, Genres - media catalog metadata |
 | Notification (Gateway) | 5000 | SignalR hub embedded in Gateway |
 
 ## Tech Stack
@@ -61,6 +61,7 @@ Media.API ←→ Catalog.API (PartId cross-reference, no direct HTTP calls)
 - **FFmpeg concurrency semaphore** - limits parallel FFmpeg processes to 1; prevents CPU/RAM exhaustion on constrained hardware
 - **Elasticsearch opt-in** - started via Docker Compose profile `--profile search`; InMemorySearchService used otherwise
 - **Clean Architecture per service** - Domain → Application → Infrastructure → API; each service independently deployable
+- **Catalog service separation** - Series/Works/Parts/Persons in dedicated Catalog.API; Media.API handles only file processing; cross-service reference via PartId (no FK across service boundaries)
 
 ## Prerequisites
 
