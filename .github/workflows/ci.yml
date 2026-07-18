@@ -44,6 +44,8 @@ jobs:
           openssl rsa -in src/Services/Identity/API/keys/private.pem -pubout -out src/Services/Identity/API/keys/public.pem
           mkdir -p src/Services/Media/API/keys
           cp src/Services/Identity/API/keys/public.pem src/Services/Media/API/keys/public.pem
+          mkdir -p src/Services/Catalog/API/keys
+          cp src/Services/Identity/API/keys/public.pem src/Services/Catalog/API/keys/public.pem
 
       - name: Install dotnet-ef
         run: dotnet tool install --global dotnet-ef
@@ -57,6 +59,7 @@ jobs:
           dotnet ef database update --project src/Services/Identity/Infrastructure --startup-project src/Services/Identity/API --context ConfigurationDbContext
           dotnet ef database update --project src/Services/Identity/Infrastructure --startup-project src/Services/Identity/API --context PersistedGrantDbContext
           dotnet ef database update --project src/Services/Media/Infrastructure --startup-project src/Services/Media/API --context MediaDbContext
+          dotnet ef database update --project src/Services/Catalog/Infrastructure --startup-project src/Services/Catalog/API --context CatalogDbContext
 
       - name: Run tests
         run: >
