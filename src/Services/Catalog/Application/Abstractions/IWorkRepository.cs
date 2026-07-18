@@ -12,4 +12,5 @@ public interface IWorkRepository
     Task AddGenreAsync(WorkGenre genre, CancellationToken ct);
     Task RemoveContributorAsync(Guid workId, Guid personId, ContributorRole role, CancellationToken ct);
     Task RemoveGenreAsync(Guid workId, Guid genreId, CancellationToken ct);
+    Task<IReadOnlyList<(WorkContributor Contributor, Person Person)>> GetContributorsWithPersonsAsync(Guid workId, CancellationToken ct);
 }

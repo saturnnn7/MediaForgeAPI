@@ -53,4 +53,14 @@ public sealed class WorkRepository(CatalogDbContext dbContext) : IWorkRepository
         if (genre is not null)
             dbContext.WorkGenres.Remove(genre);
     }
+
+    public async Task<IReadOnlyList<(WorkContributor Contributor, Person Person)>> GetContributorsWithPersonsAsync(Guid workId, CancellationToken ct)
+    {
+        var rows = await dbContext.WorkContributors
+            .Where(c => c.WorkId == workId)
+            .Join(dbContext.Persons, c => c.PersonId, p => p.Id, (c, p) => new { Contributor = c, Person = p })
+            .ToListAsync(ct);
+
+        return rows.Select(x => (x.Contributor, x.Person)).ToList();
+    }
 }
