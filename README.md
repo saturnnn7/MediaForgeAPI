@@ -9,13 +9,15 @@ B2B SaaS platform for podcast and video-blogging. Users upload media files direc
 ## Architecture
 
 ```
-Client → Gateway.YARP → Identity.API / Media.API / Search.API
+Client → Gateway.YARP → Identity.API / Media.API / Search.API / Catalog.API
 
 Media.API → MinIO (pre-signed upload)
 Media.API → RabbitMQ → Processing.Worker → FFmpeg → MinIO
 Processing.Worker → MediaProcessingCompletedEvent → RabbitMQ
 Gateway.YARP → SignalR → Client (real-time notification)
 Search.API → Elasticsearch (indexes transcription + metadata)
+Catalog.API → PostgreSQL (catalog DB)
+Media.API ←→ Catalog.API (PartId cross-reference, no direct HTTP calls)
 ```
 
 ## Services
@@ -27,6 +29,7 @@ Search.API → Elasticsearch (indexes transcription + metadata)
 | Media.API | 5002 | Media asset management, pre-signed URL generation, gRPC client |
 | Processing.Worker | - | FFmpeg transcoding, Whisper transcription, MinIO upload |
 | Search.API | 5003 | Elasticsearch indexing and full-text search |
+| Catalog.API | 5005 | Series, Works, Parts, Persons, Genres catalog |
 | Notification (Gateway) | 5000 | SignalR hub embedded in Gateway |
 
 ## Tech Stack
@@ -97,6 +100,7 @@ dotnet ef database update --project src/Services/Identity/Infrastructure --start
 dotnet ef database update --project src/Services/Identity/Infrastructure --startup-project src/Services/Identity/API --context ConfigurationDbContext
 dotnet ef database update --project src/Services/Identity/Infrastructure --startup-project src/Services/Identity/API --context PersistedGrantDbContext
 dotnet ef database update --project src/Services/Media/Infrastructure --startup-project src/Services/Media/API --context MediaDbContext
+dotnet ef database update --project src/Services/Catalog/Infrastructure --startup-project src/Services/Catalog/API --context CatalogDbContext
 ```
 
 ### 5. Run a service
@@ -126,6 +130,7 @@ MediaForgeAPI/
 │   │   ├── Identity/     # Domain / Application / Infrastructure / API
 │   │   ├── Media/        # Domain / Application / Infrastructure / API
 │   │   ├── Search/       # Domain / Application / Infrastructure / API
+│   │   ├── Catalog/      # Domain / Application / Infrastructure / API
 │   │   ├── Processing/   # Worker (BackgroundService)
 │   │   └── Gateway/      # YARP + SignalR hub
 │   └── Shared/
