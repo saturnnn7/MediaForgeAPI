@@ -1,10 +1,13 @@
+using MassTransit;
 using MediaForge.Catalog.Application.DTOs;
+using MediaForge.Shared.Contracts.Events.Catalog;
 
 namespace MediaForge.Catalog.Application.Commands.CreatePerson;
 
 public sealed class CreatePersonCommandHandler(
     IPersonRepository personRepository,
-    ICatalogUnitOfWork unitOfWork) : IRequestHandler<CreatePersonCommand, Result<PersonDto>>
+    ICatalogUnitOfWork unitOfWork,
+    IPublishEndpoint publishEndpoint) : IRequestHandler<CreatePersonCommand, Result<PersonDto>>
 {
     public async Task<Result<PersonDto>> Handle(CreatePersonCommand request, CancellationToken cancellationToken)
     {
@@ -23,6 +26,10 @@ public sealed class CreatePersonCommandHandler(
 
         await personRepository.AddAsync(person, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await publishEndpoint.Publish(
+            new PersonCreatedEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid(), person.Id, person.Name, person.Bio, person.PhotoUrl),
+            cancellationToken);
 
         return Result.Success(person.ToDto());
     }

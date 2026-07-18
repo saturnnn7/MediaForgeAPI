@@ -1,3 +1,4 @@
+using MassTransit;
 using MediaForge.Shared.Infrastructure.Persistence;
 using MediatR;
 
@@ -20,5 +21,9 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options,
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CatalogDbContext).Assembly);
+
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
     }
 }

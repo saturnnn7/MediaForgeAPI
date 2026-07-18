@@ -1,10 +1,13 @@
+using MassTransit;
 using MediaForge.Catalog.Application.DTOs;
+using MediaForge.Shared.Contracts.Events.Catalog;
 
 namespace MediaForge.Catalog.Application.Commands.UpdatePerson;
 
 public sealed class UpdatePersonCommandHandler(
     IPersonRepository personRepository,
-    ICatalogUnitOfWork unitOfWork) : IRequestHandler<UpdatePersonCommand, Result<PersonDto>>
+    ICatalogUnitOfWork unitOfWork,
+    IPublishEndpoint publishEndpoint) : IRequestHandler<UpdatePersonCommand, Result<PersonDto>>
 {
     public async Task<Result<PersonDto>> Handle(UpdatePersonCommand request, CancellationToken cancellationToken)
     {
@@ -18,6 +21,10 @@ public sealed class UpdatePersonCommandHandler(
 
         personRepository.Update(person);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await publishEndpoint.Publish(
+            new PersonUpdatedEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid(), person.Id, person.Name, person.Bio, person.PhotoUrl),
+            cancellationToken);
 
         return Result.Success(person.ToDto());
     }

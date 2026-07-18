@@ -1,11 +1,11 @@
 namespace MediaForge.Search.Application.Queries.SearchMedia;
 
-public sealed class SearchMediaQueryHandler(ISearchService searchService) : IRequestHandler<SearchMediaQuery, Result<SearchResultDto>>
+public sealed class SearchMediaQueryHandler(ISearchService searchService) : IRequestHandler<SearchMediaQuery, Result<SearchResultDto<MediaDocument>>>
 {
-    public async Task<Result<SearchResultDto>> Handle(SearchMediaQuery request, CancellationToken cancellationToken)
+    public async Task<Result<SearchResultDto<MediaDocument>>> Handle(SearchMediaQuery request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(request.Query))
-            return Result.Failure<SearchResultDto>(Error.Validation("Query", "Search query is required."));
+            return Result.Failure<SearchResultDto<MediaDocument>>(Error.Validation("Query", "Search query is required."));
 
         var pageSize = request.PageSize > 50 ? 50 : request.PageSize;
 

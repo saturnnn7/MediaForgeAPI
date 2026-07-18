@@ -34,6 +34,10 @@ public static class ServiceCollectionExtensions
         services.AddMassTransit(x =>
         {
             x.AddConsumer<MediaProcessingCompletedConsumer>();
+            x.AddConsumer<WorkPublishedConsumer>();
+            x.AddConsumer<WorkUnpublishedConsumer>();
+            x.AddConsumer<PersonCreatedConsumer>();
+            x.AddConsumer<PersonUpdatedConsumer>();
             x.UsingRabbitMq((ctx, cfg) =>
             {
                 cfg.Host(configuration.GetConnectionString("RabbitMq"), h =>
@@ -49,6 +53,11 @@ public static class ServiceCollectionExtensions
                         TimeSpan.FromSeconds(5),
                         TimeSpan.FromSeconds(30)));
                 });
+
+                cfg.ReceiveEndpoint("search-work-published", e => e.ConfigureConsumer<WorkPublishedConsumer>(ctx));
+                cfg.ReceiveEndpoint("search-work-unpublished", e => e.ConfigureConsumer<WorkUnpublishedConsumer>(ctx));
+                cfg.ReceiveEndpoint("search-person-created", e => e.ConfigureConsumer<PersonCreatedConsumer>(ctx));
+                cfg.ReceiveEndpoint("search-person-updated", e => e.ConfigureConsumer<PersonUpdatedConsumer>(ctx));
             });
         });
 

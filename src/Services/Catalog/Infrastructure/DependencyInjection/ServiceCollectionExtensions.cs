@@ -1,3 +1,4 @@
+using MassTransit;
 using MediaForge.Catalog.Infrastructure.Persistence;
 using MediaForge.Catalog.Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.Configuration;
@@ -22,6 +23,26 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IWorkRepository, WorkRepository>();
         services.AddScoped<IPartRepository, PartRepository>();
         services.AddScoped<ICatalogUnitOfWork>(sp => sp.GetRequiredService<CatalogDbContext>());
+
+        services.AddMassTransit(x =>
+        {
+            x.AddEntityFrameworkOutbox<CatalogDbContext>(o =>
+            {
+                o.UsePostgres();
+                o.UseBusOutbox();
+            });
+
+            x.UsingRabbitMq((ctx, cfg) =>
+            {
+                cfg.Host(configuration.GetConnectionString("RabbitMq"), h =>
+                {
+                    h.Username(configuration["RabbitMq:Username"] ?? "mediaforge");
+                    h.Password(configuration["RabbitMq:Password"] ?? "mediaforge_dev");
+                });
+
+                cfg.ConfigureEndpoints(ctx);
+            });
+        });
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
             typeof(IPersonRepository).Assembly,
