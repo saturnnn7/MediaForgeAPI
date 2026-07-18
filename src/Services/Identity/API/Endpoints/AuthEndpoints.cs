@@ -44,7 +44,7 @@ public static class AuthEndpoints
 
             var properties = new AuthenticationProperties { RedirectUri = "/api/auth/external-callback" };
             return Results.Challenge(properties, [scheme]);
-        });
+        }).AllowAnonymous();
 
         group.MapGet("/external-callback", async (HttpContext httpContext, ISender sender, CancellationToken ct) =>
         {
@@ -70,7 +70,7 @@ public static class AuthEndpoints
             return result.IsSuccess
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(result.Error);
-        });
+        }).AllowAnonymous();
 
         group.MapGet("/verify-email", async (Guid userId, string token, ISender sender, CancellationToken ct) =>
         {
