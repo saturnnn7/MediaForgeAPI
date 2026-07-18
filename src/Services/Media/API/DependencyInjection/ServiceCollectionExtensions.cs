@@ -24,6 +24,19 @@ public static class ServiceCollectionExtensions
         services.AddGrpcClient<UserService.UserServiceClient>(o =>
         {
             o.Address = new Uri(configuration["Grpc:IdentityServiceUrl"] ?? "https://localhost:5001");
+        })
+        .AddStandardResilienceHandler(options =>
+        {
+            options.Retry.MaxRetryAttempts = 3;
+            options.Retry.Delay = TimeSpan.FromMilliseconds(200);
+
+            options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
+            options.CircuitBreaker.MinimumThroughput = 5;
+            options.CircuitBreaker.FailureRatio = 0.5;
+            options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(15);
+
+            options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(3);
+            options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(10);
         });
         services.AddScoped<IIdentityGrpcClient, IdentityGrpcClient>();
 
