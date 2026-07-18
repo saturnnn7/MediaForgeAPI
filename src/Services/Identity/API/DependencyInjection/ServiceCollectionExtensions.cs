@@ -56,6 +56,8 @@ public static class ServiceCollectionExtensions
         services.AddAuthentication()
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, opts =>
             {
+                opts.MapInboundClaims = false;
+
                 var privateKeyPath = configuration["Jwt:PrivateKeyPath"]!;
                 var rsa = RSA.Create();
                 rsa.ImportFromPem(File.ReadAllText(privateKeyPath));

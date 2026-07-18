@@ -9,13 +9,10 @@ public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
     {
         get
         {
-            var user = httpContextAccessor.HttpContext?.User
-                ?? throw new InvalidOperationException("No HTTP context available.");
+            var value = httpContextAccessor.HttpContext?.User.FindFirstValue("sub")
+                ?? httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var value = user.FindFirstValue("sub") ?? user.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? throw new InvalidOperationException("User id claim not found.");
-
-            return Guid.Parse(value);
+            return Guid.TryParse(value, out var id) ? id : Guid.Empty;
         }
     }
 
