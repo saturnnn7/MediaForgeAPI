@@ -85,6 +85,7 @@ mkdir src/Services/Identity/API/keys
 openssl genrsa -out src/Services/Identity/API/keys/private.pem 2048
 openssl rsa -in src/Services/Identity/API/keys/private.pem -pubout -out src/Services/Identity/API/keys/public.pem
 cp src/Services/Identity/API/keys/public.pem src/Services/Media/API/keys/public.pem
+cp src/Services/Identity/API/keys/public.pem src/Services/Catalog/API/keys/public.pem
 ```
 
 ### 3. Start infrastructure
@@ -103,10 +104,26 @@ dotnet ef database update --project src/Services/Media/Infrastructure --startup-
 dotnet ef database update --project src/Services/Catalog/Infrastructure --startup-project src/Services/Catalog/API --context CatalogDbContext
 ```
 
-### 5. Run a service
+### 5. Run all services (5 separate terminals)
 
 ```powershell
+# Terminal 1
 dotnet run --project src/Services/Identity/API
+
+# Terminal 2
+dotnet run --project src/Services/Media/API
+
+# Terminal 3
+dotnet run --project src/Services/Processing/Worker
+
+# Terminal 4
+dotnet run --project src/Services/Search/API
+
+# Terminal 5
+dotnet run --project src/Services/Gateway
+
+# Terminal 6
+dotnet run --project src/Services/Catalog/API
 ```
 
 ## Running Tests
