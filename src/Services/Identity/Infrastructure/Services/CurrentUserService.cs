@@ -30,4 +30,7 @@ public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
                 ?? throw new InvalidOperationException("Email claim not found.");
         }
     }
+
+    public bool IsAuthenticated =>
+        httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false;
 }

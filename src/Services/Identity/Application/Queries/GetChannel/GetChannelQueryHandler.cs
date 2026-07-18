@@ -4,6 +4,7 @@ using MediaForge.Identity.Application.DTOs;
 namespace MediaForge.Identity.Application.Queries.GetChannel;
 
 public sealed class GetChannelQueryHandler(
+    ICurrentUserService currentUser,
     IChannelRepository channelRepository) : IRequestHandler<GetChannelQuery, Result<ChannelDto>>
 {
     public async Task<Result<ChannelDto>> Handle(GetChannelQuery request, CancellationToken cancellationToken)
@@ -14,6 +15,9 @@ public sealed class GetChannelQueryHandler(
             return Result.Failure<ChannelDto>(Error.NotFound("Channel", request.ChannelId));
         }
 
+        var isSubscribed = currentUser.IsAuthenticated
+            && await channelRepository.IsSubscribedAsync(channel.Id, currentUser.UserId, cancellationToken);
+
         return Result.Success(new ChannelDto(
             channel.Id,
             channel.Name,
@@ -21,6 +25,6 @@ public sealed class GetChannelQueryHandler(
             channel.AvatarUrl,
             channel.SubscriberCount,
             channel.CreatedAt,
-            false));
+            isSubscribed));
     }
 }
