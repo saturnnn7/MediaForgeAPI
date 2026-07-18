@@ -8,6 +8,7 @@ using MediaForge.Identity.Infrastructure.Persistence;
 using MediaForge.Identity.Infrastructure.Persistence.Repositories;
 using MediaForge.Identity.Infrastructure.Services;
 using MediaForge.Shared.Infrastructure.HealthChecks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +73,18 @@ public static class ServiceCollectionExtensions
                     ValidateLifetime = true,
                     IssuerSigningKey = new RsaSecurityKey(rsa)
                 };
+            })
+            .AddGoogle(opts =>
+            {
+                opts.ClientId = configuration["Authentication:Google:ClientId"] ?? string.Empty;
+                opts.ClientSecret = configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
+                opts.CallbackPath = "/signin-google";
+                opts.SignInScheme = IdentityConstants.ExternalScheme;
+
+                opts.Scope.Add("email");
+                opts.Scope.Add("profile");
+
+                opts.ClaimActions.MapJsonKey("picture", "picture");
             });
 
         services.AddAuthorizationBuilder()

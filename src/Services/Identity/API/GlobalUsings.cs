@@ -4,6 +4,7 @@ global using Microsoft.Extensions.Configuration;
 global using MediaForge.Identity.Application.Abstractions;
 global using MediaForge.Identity.Application.Commands.Register;
 global using MediaForge.Identity.Application.Commands.Login;
+global using MediaForge.Identity.Application.Commands.FindOrCreateByGoogle;
 global using MediaForge.Identity.Application.Commands.RefreshToken;
 global using MediaForge.Identity.Application.Commands.VerifyEmail;
 global using MediaForge.Identity.Application.Commands.BecomeCreator;
