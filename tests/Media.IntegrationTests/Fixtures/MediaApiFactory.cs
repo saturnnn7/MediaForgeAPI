@@ -79,7 +79,7 @@ public sealed class MediaApiFactory(MediaInfrastructureFixture fixture) : WebApp
             foreach (var hs in hostedServices)
                 services.Remove(hs);
 
-            // Accept any bearer token signature — the app validates against Identity's
+            // Accept any bearer token signature - the app validates against Identity's
             // real signing key in production, which isn't available here. A static
             // (empty) ConfigurationManager also stops JwtBearerHandler from trying to
             // fetch OIDC discovery metadata from the fake Authority URL.

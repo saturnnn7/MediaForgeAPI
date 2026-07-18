@@ -54,7 +54,7 @@ public sealed class IdentityApiFactory(DatabaseFixture fixture) : WebApplication
 
             services.AddDistributedMemoryCache();
 
-            // Real SMTP isn't available in the test environment — swap in a no-op fake.
+            // Real SMTP isn't available in the test environment - swap in a no-op fake.
             var emailDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IEmailService));
             if (emailDescriptor != null)
                 services.Remove(emailDescriptor);
@@ -62,7 +62,7 @@ public sealed class IdentityApiFactory(DatabaseFixture fixture) : WebApplication
             services.AddScoped<IEmailService, NoOpEmailService>();
 
             // Duende's TokenCleanupHost has a flaky start/stop lifecycle under WebApplicationFactory's
-            // fast test host — it's a periodic maintenance task with no bearing on these tests.
+            // fast test host - it's a periodic maintenance task with no bearing on these tests.
             var tokenCleanupDescriptor = services.SingleOrDefault(d =>
                 d.ServiceType == typeof(IHostedService)
                 && d.ImplementationType?.Name == "TokenCleanupHost");

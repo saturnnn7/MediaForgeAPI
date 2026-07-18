@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/saturnnn7/MediaForgeAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/saturnnn7/MediaForgeAPI/actions/workflows/ci.yml)
 
-**Kyrylo Soprykin** — [LinkedIn](https://www.linkedin.com/in/kyrylo-soprykin/) | [GitHub](https://github.com/saturnnn7)
+**Kyrylo Soprykin** - [LinkedIn](https://www.linkedin.com/in/kyrylo-soprykin/) | [GitHub](https://github.com/saturnnn7)
 
 B2B SaaS platform for podcast and video-blogging. Users upload media files directly to object storage via pre-signed URLs. The system asynchronously transcodes to HLS, generates thumbnails, transcribes via OpenAI Whisper, indexes for full-text search, and notifies users in real time.
 
@@ -51,13 +51,13 @@ Search.API → Elasticsearch (indexes transcription + metadata)
 
 ## Key Design Decisions
 
-- **Outbox Pattern** (MassTransit EF Core) — guarantees at-least-once delivery; no ghost records if broker is down during a request
-- **Pre-signed URLs** — media files never transit the API servers; client uploads directly to MinIO
-- **Pure Domain layer** — no ASP.NET Identity in Domain; IdentityAppUser lives in Infrastructure only
-- **gRPC for synchronous inter-service calls** — Media.API validates user existence against Identity.API before persisting assets
-- **FFmpeg concurrency semaphore** — limits parallel FFmpeg processes to 1; prevents CPU/RAM exhaustion on constrained hardware
-- **Elasticsearch opt-in** — started via Docker Compose profile `--profile search`; InMemorySearchService used otherwise
-- **Clean Architecture per service** — Domain → Application → Infrastructure → API; each service independently deployable
+- **Outbox Pattern** (MassTransit EF Core) - guarantees at-least-once delivery; no ghost records if broker is down during a request
+- **Pre-signed URLs** - media files never transit the API servers; client uploads directly to MinIO
+- **Pure Domain layer** - no ASP.NET Identity in Domain; IdentityAppUser lives in Infrastructure only
+- **gRPC for synchronous inter-service calls** - Media.API validates user existence against Identity.API before persisting assets
+- **FFmpeg concurrency semaphore** - limits parallel FFmpeg processes to 1; prevents CPU/RAM exhaustion on constrained hardware
+- **Elasticsearch opt-in** - started via Docker Compose profile `--profile search`; InMemorySearchService used otherwise
+- **Clean Architecture per service** - Domain → Application → Infrastructure → API; each service independently deployable
 
 ## Prerequisites
 

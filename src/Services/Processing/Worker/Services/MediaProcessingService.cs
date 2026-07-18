@@ -212,7 +212,7 @@ public sealed class MediaProcessingService(
         var key = configuration["OpenAI:ApiKey"];
         if (string.IsNullOrEmpty(key))
         {
-            logger.LogWarning("OpenAI API key not configured — skipping transcription.");
+            logger.LogWarning("OpenAI API key not configured - skipping transcription.");
             return (null, null);
         }
 
