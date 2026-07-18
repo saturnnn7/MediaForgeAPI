@@ -67,5 +67,10 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
 
         builder.Navigation(u => u.RefreshTokens)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasOne(u => u.Channel)
+            .WithOne()
+            .HasForeignKey<Channel>(c => c.OwnerId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

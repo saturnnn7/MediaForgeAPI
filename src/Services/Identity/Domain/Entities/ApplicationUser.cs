@@ -15,6 +15,7 @@ public sealed class ApplicationUser : AggregateRoot
     public bool IsEmailVerified { get; private set; }
     public UserRole Role { get; private set; } = UserRole.Listener;
     public DateTime CreatedAt { get; init; }
+    public Channel? Channel { get; private set; }
 
     public IReadOnlyList<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
@@ -93,5 +94,27 @@ public sealed class ApplicationUser : AggregateRoot
     {
         Role = UserRole.Listener;
         return Result.Success();
+    }
+
+    public Result<Channel> CreateChannel(string name)
+    {
+        if (Role != UserRole.Creator)
+        {
+            return Result.Failure<Channel>(Error.Validation("Role", "Only Creators can have channels."));
+        }
+
+        if (Channel != null)
+        {
+            return Result.Failure<Channel>(Error.Conflict("Channel", "User already has a channel."));
+        }
+
+        var channelResult = Channel.Create(Id, name);
+        if (channelResult.IsFailure)
+        {
+            return channelResult;
+        }
+
+        Channel = channelResult.Value;
+        return Result.Success(channelResult.Value);
     }
 }

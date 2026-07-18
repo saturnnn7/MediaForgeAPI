@@ -76,6 +76,7 @@ public static class ServiceCollectionExtensions
         services.AddStackExchangeRedisCache(opts => opts.Configuration = configuration.GetConnectionString("Redis"));
 
         services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
+        services.AddScoped<IChannelRepository, ChannelRepository>();
         services.AddScoped<IIdentityUnitOfWork>(sp => sp.GetRequiredService<IdentityDbContext>());
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();

@@ -11,6 +11,8 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     : IdentityDbContext<IdentityAppUser, IdentityRole<Guid>, Guid>(options), IIdentityUnitOfWork
 {
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
+    public DbSet<Channel> Channels => Set<Channel>();
+    public DbSet<ChannelSubscription> Subscriptions => Set<ChannelSubscription>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

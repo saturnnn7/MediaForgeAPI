@@ -7,6 +7,9 @@ public sealed class ApplicationUserRepository(IdentityDbContext dbContext) : IAp
     public Task<ApplicationUser?> GetByIdAsync(Guid id, CancellationToken ct) =>
         dbContext.ApplicationUsers.FirstOrDefaultAsync(u => u.Id == id, ct);
 
+    public Task<ApplicationUser?> GetByIdWithChannelAsync(Guid id, CancellationToken ct) =>
+        dbContext.ApplicationUsers.Include(u => u.Channel).FirstOrDefaultAsync(u => u.Id == id, ct);
+
     public Task<ApplicationUser?> GetByEmailAsync(string email, CancellationToken ct) =>
         dbContext.ApplicationUsers.FirstOrDefaultAsync(u => u.Email == email, ct);
 

@@ -20,6 +20,7 @@ app.UseAuthorization();
 app.MapGrpcService<UserGrpcService>();
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
+app.MapChannelEndpoints();
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "identity" }));
 
 if (app.Environment.IsDevelopment())
