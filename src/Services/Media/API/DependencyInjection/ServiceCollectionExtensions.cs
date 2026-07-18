@@ -3,6 +3,7 @@ using MediaForge.Identity.API.Grpc;
 using MediaForge.Media.API.Grpc;
 using MediaForge.Media.Application.Abstractions;
 using MediaForge.Media.Infrastructure.DependencyInjection;
+using MediaForge.Shared.Infrastructure.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Security.Cryptography;
@@ -48,7 +49,7 @@ public static class ServiceCollectionExtensions
         services.AddHealthChecks()
             .AddNpgSql(configuration.GetConnectionString("MediaDb")!, name: "postgres", tags: ["db"])
             .AddRedis(configuration.GetConnectionString("Redis")!, name: "redis", tags: ["cache"])
-            .AddRabbitMQ(rabbitConnectionString: configuration.GetConnectionString("RabbitMq")!, name: "rabbitmq", tags: ["messaging"])
+            .AddRabbitMqCheck(configuration.GetConnectionString("RabbitMq")!, tags: ["messaging"])
             .AddCheck("minio", () =>
             {
                 var url = configuration["Storage:ServiceUrl"];

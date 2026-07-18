@@ -3,6 +3,7 @@ using MassTransit;
 using MediaForge.Search.Application.Abstractions;
 using MediaForge.Search.Application.Consumers;
 using MediaForge.Search.Infrastructure.Search;
+using MediaForge.Shared.Infrastructure.HealthChecks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,7 +16,7 @@ public static class ServiceCollectionExtensions
         var provider = configuration["Search:Provider"] ?? "inmemory";
 
         var healthChecksBuilder = services.AddHealthChecks()
-            .AddRabbitMQ(rabbitConnectionString: configuration.GetConnectionString("RabbitMq")!, name: "rabbitmq", tags: ["messaging"]);
+            .AddRabbitMqCheck(configuration.GetConnectionString("RabbitMq")!, tags: ["messaging"]);
 
         if (provider == "elasticsearch")
         {

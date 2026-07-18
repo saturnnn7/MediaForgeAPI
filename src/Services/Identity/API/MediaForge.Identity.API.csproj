@@ -17,7 +17,6 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
     <PackageReference Include="AspNetCore.HealthChecks.Redis" />
-    <PackageReference Include="AspNetCore.HealthChecks.RabbitMQ" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -20,7 +20,6 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <PackageReference Include="Serilog.AspNetCore" />
-    <PackageReference Include="AspNetCore.HealthChecks.RabbitMQ" />
   </ItemGroup>
 
   <ItemGroup>

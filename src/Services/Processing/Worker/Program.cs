@@ -3,6 +3,7 @@ using Amazon.Runtime;
 using Amazon.S3;
 using MediaForge.Processing.Worker.Consumers;
 using MediaForge.Processing.Worker.Services;
+using MediaForge.Shared.Infrastructure.HealthChecks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
@@ -67,8 +68,7 @@ builder.Logging.ClearProviders();
 builder.Services.AddSerilog(cfg => cfg.WriteTo.Console(formatProvider: CultureInfo.InvariantCulture));
 
 builder.Services.AddHealthChecks()
-    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMq")!,
-                 name: "rabbitmq", tags: ["messaging"]);
+    .AddRabbitMqCheck(builder.Configuration.GetConnectionString("RabbitMq")!, tags: ["messaging"]);
 
 builder.WebHost.UseUrls("http://localhost:5004");
 

@@ -1,5 +1,6 @@
 using MediaForge.Gateway.YARP.Consumers;
 using MediaForge.Gateway.YARP.Hubs;
+using MediaForge.Shared.Infrastructure.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
@@ -95,8 +96,7 @@ builder.Services.AddCors(opts =>
 
 builder.Services.AddHealthChecks()
     .AddRedis(redisConn, name: "redis", tags: ["cache"])
-    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMq")!,
-                 name: "rabbitmq", tags: ["messaging"])
+    .AddRabbitMqCheck(builder.Configuration.GetConnectionString("RabbitMq")!, tags: ["messaging"])
     .AddUrlGroup(new Uri("http://localhost:5001/health/live"), name: "identity-api", tags: ["upstream"])
     .AddUrlGroup(new Uri("http://localhost:5002/health/live"), name: "media-api", tags: ["upstream"]);
 

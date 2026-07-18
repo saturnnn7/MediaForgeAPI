@@ -7,6 +7,7 @@ using MediaForge.Identity.Infrastructure.Identity;
 using MediaForge.Identity.Infrastructure.Persistence;
 using MediaForge.Identity.Infrastructure.Persistence.Repositories;
 using MediaForge.Identity.Infrastructure.Services;
+using MediaForge.Shared.Infrastructure.HealthChecks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -83,8 +84,7 @@ public static class ServiceCollectionExtensions
                        name: "postgres", tags: ["db"])
             .AddRedis(configuration.GetConnectionString("Redis")!,
                       name: "redis", tags: ["cache"])
-            .AddRabbitMQ(rabbitConnectionString: configuration.GetConnectionString("RabbitMq")!,
-                         name: "rabbitmq", tags: ["messaging"]);
+            .AddRabbitMqCheck(configuration.GetConnectionString("RabbitMq")!, tags: ["messaging"]);
 
         services.AddStackExchangeRedisCache(opts => opts.Configuration = configuration.GetConnectionString("Redis"));
 

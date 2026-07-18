@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Contracts\MediaForge.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shared\Infrastructure\MediaForge.Shared.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,7 +16,6 @@
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="StackExchange.Redis" />
     <PackageReference Include="AspNetCore.HealthChecks.Redis" />
-    <PackageReference Include="AspNetCore.HealthChecks.RabbitMQ" />
     <PackageReference Include="AspNetCore.HealthChecks.Uris" />
   </ItemGroup>
 
