@@ -1,10 +1,12 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using FluentValidation;
 using MediaForge.Search.API.Endpoints;
 using MediaForge.Search.Application.Queries.SearchMedia;
 using MediaForge.Search.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
@@ -24,9 +26,18 @@ builder.Services.AddSearchInfrastructure(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opts =>
     {
-        opts.Authority = builder.Configuration["IdentityServer:Authority"];
-        opts.Audience = builder.Configuration["IdentityServer:Audience"];
+        var publicKeyPath = builder.Configuration["Jwt:PublicKeyPath"]!;
+        var rsa = RSA.Create();
+        rsa.ImportFromPem(File.ReadAllText(publicKeyPath));
+        opts.TokenValidationParameters = new()
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            IssuerSigningKey = new RsaSecurityKey(rsa)
+        };
         opts.RequireHttpsMetadata = false;
+        opts.MapInboundClaims = false;
     });
 builder.Services.AddAuthorization();
 builder.Services.AddValidatorsFromAssembly(typeof(SearchMediaQuery).Assembly);
