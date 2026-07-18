@@ -9,6 +9,7 @@ using MediaForge.Identity.Infrastructure.Persistence.Repositories;
 using MediaForge.Identity.Infrastructure.Services;
 using MediaForge.Shared.Infrastructure.HealthChecks;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,14 @@ public static class ServiceCollectionExtensions
                 opts.EnableTokenCleanup = true;
             })
             .AddAspNetIdentity<IdentityAppUser>();
+
+        services.Configure<CookieAuthenticationOptions>(
+            IdentityConstants.ExternalScheme,
+            opts =>
+            {
+                opts.Cookie.SameSite = SameSiteMode.Lax;
+                opts.Cookie.SecurePolicy = CookieSecurePolicy.None;
+            });
 
         services.AddAuthentication()
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, opts =>
