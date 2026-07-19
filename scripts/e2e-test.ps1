@@ -1,0 +1,319 @@
+# MediaForge End-to-End Test Suite
+# Exercises the full user journey across all services via the Gateway (and direct service URLs where needed).
+# Requires: all 7 services running locally, infra (Postgres/Redis/RabbitMQ/MinIO) up.
+
+## Configuration
+$BaseUrl = "http://localhost:5000"        # Gateway
+$IdentityUrl = "http://localhost:5001"    # Identity direct (for admin tasks)
+$CatalogUrl = "http://localhost:5005"     # Catalog direct
+$LibraryUrl = "http://localhost:5006"     # Library direct
+$AudioFilePath = ""                        # Set by user before running
+$VideoFilePath = ""                        # Set by user before running
+
+## Helper functions
+function Write-Pass($msg) { Write-Host "  [PASS] $msg" -ForegroundColor Green }
+function Write-Fail($msg) { Write-Host "  [FAIL] $msg" -ForegroundColor Red }
+function Write-Step($msg) { Write-Host "`n>> $msg" -ForegroundColor Cyan }
+
+function Invoke-Api {
+    param($Url, $Method = "GET", $Body = $null, $Token = $null, $FilePath = $null)
+    $headers = @{ "Content-Type" = "application/json" }
+    if ($Token) { $headers["Authorization"] = "Bearer $Token" }
+    try {
+        if ($FilePath) {
+            return Invoke-WebRequest -Uri $Url -Method $Method -UseBasicParsing -InFile $FilePath -Headers $headers
+        } elseif ($Body) {
+            return Invoke-WebRequest -Uri $Url -Method $Method -UseBasicParsing -Body ($Body | ConvertTo-Json) -Headers $headers
+        } else {
+            return Invoke-WebRequest -Uri $Url -Method $Method -UseBasicParsing -Headers $headers
+        }
+    } catch {
+        return $_.Exception.Response
+    }
+}
+
+function Get-ResponseBody($response) {
+    if ($response -is [System.Net.HttpWebResponse]) { return $null }
+    return $response.Content | ConvertFrom-Json
+}
+
+function Assert-Status($response, $expected, $stepName) {
+    $actual = if ($response -is [System.Net.HttpWebResponse]) {
+        [int]$response.StatusCode
+    } else {
+        $response.StatusCode
+    }
+    if ($actual -eq $expected) {
+        Write-Pass "$stepName (HTTP $actual)"
+        return $true
+    } else {
+        Write-Fail "$stepName (Expected $expected, got $actual)"
+        return $false
+    }
+}
+
+Write-Host "MediaForge E2E Test Suite" -ForegroundColor Yellow
+Write-Host "=========================" -ForegroundColor Yellow
+$startTime = Get-Date
+
+## PHASE 1: Health checks
+Write-Step "Phase 1: Health Checks"
+
+$services = @(
+    @{ Name = "Gateway"; Url = "$BaseUrl/health" },
+    @{ Name = "Identity"; Url = "$IdentityUrl/health" },
+    @{ Name = "Catalog"; Url = "$CatalogUrl/health" },
+    @{ Name = "Library"; Url = "$LibraryUrl/health" }
+)
+foreach ($svc in $services) {
+    $r = Invoke-Api $svc.Url
+    Assert-Status $r 200 "$($svc.Name) health"
+}
+
+## PHASE 2: User Registration
+Write-Step "Phase 2: User Registration & Auth"
+
+# Register Admin
+$r = Invoke-Api "$BaseUrl/api/auth/register" "POST" @{
+    email = "admin@e2e-test.dev"; password = "AdminPass1!"; displayName = "E2E Admin"
+}
+Assert-Status $r 201 "Register admin"
+$adminId = (Get-ResponseBody $r).id
+
+# Register Creator
+$r = Invoke-Api "$BaseUrl/api/auth/register" "POST" @{
+    email = "creator@e2e-test.dev"; password = "CreatorPass1!"; displayName = "E2E Creator"
+}
+Assert-Status $r 201 "Register creator"
+$creatorId = (Get-ResponseBody $r).id
+
+# Register Listener
+$r = Invoke-Api "$BaseUrl/api/auth/register" "POST" @{
+    email = "listener@e2e-test.dev"; password = "ListenerPass1!"; displayName = "E2E Listener"
+}
+Assert-Status $r 201 "Register listener"
+$listenerId = (Get-ResponseBody $r).id
+
+# Set admin/creator role via direct DB (manual step - no admin-role endpoint exists yet)
+Write-Host "  [INFO] Set admin role: docker exec -it mf-postgres psql -U mediaforge -d identity -c `"UPDATE users SET role='admin' WHERE email='admin@e2e-test.dev';`"" -ForegroundColor Yellow
+Write-Host "  [INFO] Set creator role: docker exec -it mf-postgres psql -U mediaforge -d identity -c `"UPDATE users SET role='creator' WHERE email='creator@e2e-test.dev';`"" -ForegroundColor Yellow
+Write-Host "  Press ENTER after setting roles..." -ForegroundColor Yellow
+Read-Host
+
+# Verify emails via direct DB (no SMTP in this script)
+Write-Host "  [INFO] Verify emails: docker exec -it mf-postgres psql -U mediaforge -d identity -c `"UPDATE users SET is_email_verified=true;`"" -ForegroundColor Yellow
+Write-Host "  Press ENTER after verifying emails..." -ForegroundColor Yellow
+Read-Host
+
+## PHASE 3: Login & Tokens
+Write-Step "Phase 3: Login"
+
+$r = Invoke-Api "$BaseUrl/api/auth/login" "POST" @{ email = "admin@e2e-test.dev"; password = "AdminPass1!" }
+Assert-Status $r 200 "Admin login"
+$adminToken = (Get-ResponseBody $r).accessToken
+
+$r = Invoke-Api "$BaseUrl/api/auth/login" "POST" @{ email = "creator@e2e-test.dev"; password = "CreatorPass1!" }
+Assert-Status $r 200 "Creator login"
+$creatorToken = (Get-ResponseBody $r).accessToken
+
+$r = Invoke-Api "$BaseUrl/api/auth/login" "POST" @{ email = "listener@e2e-test.dev"; password = "ListenerPass1!" }
+Assert-Status $r 200 "Listener login"
+$listenerToken = (Get-ResponseBody $r).accessToken
+
+## PHASE 4: Catalog setup
+Write-Step "Phase 4: Catalog - Genre, Person, Series"
+
+# Create Genre
+$r = Invoke-Api "$BaseUrl/api/genres" "POST" @{ name = "Fantasy"; slug = "fantasy"; description = "Fantasy genre" } $adminToken
+Assert-Status $r 201 "Create genre"
+$genreId = (Get-ResponseBody $r).id
+
+# Create Person (Author)
+$r = Invoke-Api "$BaseUrl/api/persons" "POST" @{ name = "Test Author"; bio = "A great author" } $adminToken
+Assert-Status $r 201 "Create person (author)"
+$personId = (Get-ResponseBody $r).id
+
+## PHASE 5: Creator Channel
+Write-Step "Phase 5: Creator Channel"
+
+# Creator must already have the creator role (set via DB above)
+$r = Invoke-Api "$BaseUrl/api/channels" "POST" @{ name = "E2E Creator Channel" } $creatorToken
+Assert-Status $r 201 "Create channel"
+$channelId = (Get-ResponseBody $r).id
+
+## PHASE 6: Work Request & Approval
+Write-Step "Phase 6: Work Request Workflow"
+
+# Creator submits work request
+$r = Invoke-Api "$BaseUrl/api/work-requests" "POST" @{
+    workType = 0
+    title = "E2E Test Audiobook"
+    authorNames = "Test Author"
+    description = "A test audiobook for E2E testing"
+    language = "en"
+} $creatorToken
+Assert-Status $r 201 "Submit work request"
+$requestId = (Get-ResponseBody $r).id
+
+# Admin approves
+$r = Invoke-Api "$CatalogUrl/api/work-requests/$requestId/approve" "POST" @{ channelId = $channelId } $adminToken
+Assert-Status $r 200 "Admin approves work request"
+$workId = (Get-ResponseBody $r).resultingWorkId
+
+# Verify work was created
+$r = Invoke-Api "$BaseUrl/api/works/$workId"
+Assert-Status $r 200 "Work created from request"
+
+## PHASE 7: Edition & Parts
+Write-Step "Phase 7: Edition & Parts"
+
+# Create Edition
+$r = Invoke-Api "$CatalogUrl/api/editions" "POST" @{
+    workId = $workId
+    narratorTeamName = "E2E Narrator Team"
+    language = "en"
+} $creatorToken
+Assert-Status $r 201 "Create edition"
+$editionId = (Get-ResponseBody $r).id
+
+# Create Part
+$r = Invoke-Api "$CatalogUrl/api/parts" "POST" @{
+    editionId = $editionId
+    title = "Chapter 1 - The Beginning"
+    orderMajor = 1
+    orderMinor = 0
+    partType = 0
+} $creatorToken
+Assert-Status $r 201 "Create part"
+$partId = (Get-ResponseBody $r).id
+
+## PHASE 8: Media Upload
+Write-Step "Phase 8: Media Upload & Processing"
+
+if ($AudioFilePath -and (Test-Path $AudioFilePath)) {
+    # Request upload URL
+    $fileName = Split-Path $AudioFilePath -Leaf
+    $r = Invoke-Api "$BaseUrl/api/media/upload-url" "POST" @{
+        fileName = $fileName
+        contentType = "audio/mpeg"
+        fileSizeBytes = (Get-Item $AudioFilePath).Length
+    } $creatorToken
+    Assert-Status $r 201 "Request upload URL"
+    $uploadData = Get-ResponseBody $r
+    $assetId = $uploadData.assetId
+    $uploadUrl = $uploadData.uploadUrl
+
+    # Upload to MinIO
+    $uploadHeaders = @{}
+    $uploadResponse = Invoke-WebRequest -Uri $uploadUrl -Method PUT -UseBasicParsing -InFile $AudioFilePath -Headers $uploadHeaders
+    Assert-Status $uploadResponse 200 "Upload file to MinIO"
+
+    # Confirm upload
+    $r = Invoke-Api "$BaseUrl/api/media/$assetId/confirm-upload" "POST" $null $creatorToken
+    Assert-Status $r 202 "Confirm upload"
+
+    Write-Host "  [INFO] Waiting for processing (30 seconds)..." -ForegroundColor Yellow
+    Start-Sleep -Seconds 30
+
+    # Check asset status
+    $r = Invoke-Api "$BaseUrl/api/media/$assetId" "GET" $null $creatorToken
+    $status = (Get-ResponseBody $r).status
+    if ($status -eq "Completed") {
+        Write-Pass "Asset processing completed"
+    } else {
+        Write-Fail "Asset processing - status: $status (may need more time)"
+    }
+
+    # Link asset to part
+    $r = Invoke-Api "$BaseUrl/api/media/$assetId/part" "PATCH" @{ partId = $partId } $creatorToken
+    Assert-Status $r 200 "Link asset to part"
+
+    $r = Invoke-Api "$CatalogUrl/api/parts/$partId/assets" "POST" @{
+        mediaAssetId = $assetId; sequenceOrder = 1
+    } $creatorToken
+    Assert-Status $r 201 "Link asset in catalog"
+} else {
+    Write-Host "  [SKIP] No audio file provided - set `$AudioFilePath to test upload" -ForegroundColor Yellow
+}
+
+## PHASE 9: Publish Work
+Write-Step "Phase 9: Publish Work"
+
+$r = Invoke-Api "$CatalogUrl/api/works/$workId/publish" "POST" $null $adminToken
+Assert-Status $r 200 "Publish work"
+
+$r = Invoke-Api "$CatalogUrl/api/parts/$partId/publish" "POST" $null $creatorToken
+Assert-Status $r 200 "Publish part"
+
+## PHASE 10: Library & Reviews
+Write-Step "Phase 10: Listener - Library & Reviews"
+
+# Add to library
+$r = Invoke-Api "$BaseUrl/api/library" "POST" @{
+    workId = $workId; status = 0; privacy = 0
+} $listenerToken
+Assert-Status $r 201 "Add work to library"
+
+# Rate the work
+$r = Invoke-Api "$LibraryUrl/api/library/$workId/rating" "PUT" @{ rating = 8 } $listenerToken
+Assert-Status $r 200 "Rate work (8/10)"
+
+# Write review
+$r = Invoke-Api "$BaseUrl/api/reviews" "POST" @{
+    workId = $workId
+    text = "Excellent audiobook! The narrator team did a fantastic job. ||The ending was unexpected||"
+    containsSpoiler = $true
+} $listenerToken
+Assert-Status $r 201 "Write review"
+$reviewId = (Get-ResponseBody $r).id
+
+# Add comment
+$r = Invoke-Api "$BaseUrl/api/reviews/$reviewId/comments" "POST" @{
+    text = "I totally agree with this review!"
+    containsSpoiler = $false
+} $listenerToken
+Assert-Status $r 201 "Add comment to review"
+
+## PHASE 11: Social Features
+Write-Step "Phase 11: Social Features"
+
+# Listener sends friend request to creator
+$r = Invoke-Api "$BaseUrl/api/friends/request/$creatorId" "POST" $null $listenerToken
+Assert-Status $r 201 "Send friend request"
+$friendshipId = (Get-ResponseBody $r).id
+
+# Creator accepts
+$r = Invoke-Api "$BaseUrl/api/friends/$friendshipId/accept" "POST" $null $creatorToken
+Assert-Status $r 200 "Accept friend request"
+
+# Check listener notification
+$r = Invoke-Api "$BaseUrl/api/notifications?page=1&pageSize=20" "GET" $null $listenerToken
+Assert-Status $r 200 "Get notifications"
+$notifCount = (Get-ResponseBody $r).Count
+if ($notifCount -gt 0) { Write-Pass "Notification received ($notifCount)" }
+else { Write-Fail "No notifications found" }
+
+# Follow author
+$r = Invoke-Api "$BaseUrl/api/authors/$personId/follow" "POST" $null $listenerToken
+Assert-Status $r 201 "Follow author"
+
+## PHASE 12: Search
+Write-Step "Phase 12: Search"
+
+Start-Sleep -Seconds 2
+$r = Invoke-Api "$BaseUrl/api/search/works?q=E2E" "GET" $null $listenerToken
+Assert-Status $r 200 "Search works"
+
+## Summary
+Write-Host "`n=========================" -ForegroundColor Yellow
+$elapsed = (Get-Date) - $startTime
+Write-Host "E2E Test Complete in $($elapsed.TotalSeconds.ToString('F1'))s" -ForegroundColor Yellow
+
+Write-Host "`nTest Data Created:" -ForegroundColor Cyan
+Write-Host "  workId:    $workId"
+Write-Host "  editionId: $editionId"
+Write-Host "  partId:    $partId"
+if ($assetId) { Write-Host "  assetId:   $assetId" }
+Write-Host "  channelId: $channelId"
+Write-Host "  genreId:   $genreId"
+Write-Host "  personId:  $personId"
