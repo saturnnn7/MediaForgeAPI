@@ -28,6 +28,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opts =>
 {
     opts.SwaggerDoc("v1", new OpenApiInfo { Title = "MediaForge - Identity API", Version = "v1" });
+    opts.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
     opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
