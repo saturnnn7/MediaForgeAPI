@@ -277,8 +277,8 @@ if (-not $partId) {
     $assetId = $uploadData.assetId
     $uploadUrl = $uploadData.uploadUrl
 
-    # Upload to MinIO via HttpClient with all default headers cleared - MinIO's presigned
-    # URL signature validation rejects any header not included in the signature
+    # Upload to MinIO via HttpClient. The presigned URL no longer bakes Content-Type into
+    # its signature (see StorageService.GenerateUploadUrlAsync), so no header matching is needed.
     if (-not $uploadUrl) {
         Write-Fail "Upload URL is empty - skipping upload"
     } else {
@@ -289,7 +289,8 @@ if (-not $partId) {
         $httpClient.DefaultRequestHeaders.Clear()
 
         $fileBytes = [System.IO.File]::ReadAllBytes($AudioFilePath)
-        $content = New-Object System.Net.Http.ByteArrayContent($fileBytes)
+        # Comma prevents New-Object from unpacking the byte[] into individual constructor args
+        $content = New-Object System.Net.Http.ByteArrayContent(,$fileBytes)
 
         try {
             $uploadResult = $httpClient.PutAsync($uploadUrl, $content).GetAwaiter().GetResult()

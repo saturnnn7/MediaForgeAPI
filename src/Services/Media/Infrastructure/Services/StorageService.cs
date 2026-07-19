@@ -13,7 +13,6 @@ public sealed class StorageService(IAmazonS3 s3Client) : IStorageService
             BucketName = bucketName,
             Key = objectKey,
             Verb = HttpVerb.PUT,
-            ContentType = contentType,
             Expires = DateTime.UtcNow.Add(expiry)
         };
 
