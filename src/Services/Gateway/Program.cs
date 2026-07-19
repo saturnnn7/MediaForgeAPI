@@ -32,6 +32,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         opts.Authority = builder.Configuration["IdentityServer:Authority"];
         opts.RequireHttpsMetadata = false;
+        opts.MapInboundClaims = false; // keep raw claim names (e.g. "role") instead of the default ClaimTypes.* remapping
         opts.TokenValidationParameters = new()
         {
             ValidateAudience = false // downstream services validate their own audiences
@@ -76,7 +77,7 @@ builder.Services.AddRateLimiter(opts =>
         {
             "admin" => 100,
             "creator" => 20,
-            _ => 0
+            _ => 1
         };
 
         var partitionKey = userId ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
