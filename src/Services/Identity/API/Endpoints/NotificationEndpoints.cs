@@ -15,9 +15,9 @@ public static class NotificationEndpoints
                 .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                 .RequireAuthenticatedUser());
 
-        group.MapGet("/", async (int page, int pageSize, ISender sender, CancellationToken ct) =>
+        group.MapGet("/", async (ISender sender, CancellationToken ct, int page = 1, int pageSize = 20) =>
         {
-            var result = await sender.Send(new GetNotificationsQuery(page == 0 ? 1 : page, pageSize == 0 ? 20 : pageSize), ct);
+            var result = await sender.Send(new GetNotificationsQuery(page, pageSize), ct);
             return result.IsSuccess
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(result.Error);
