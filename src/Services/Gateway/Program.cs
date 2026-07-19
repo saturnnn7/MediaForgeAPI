@@ -117,6 +117,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<MediaProcessingCompletedConsumer>();
     x.AddConsumer<MediaProcessingFailedConsumer>();
+    x.AddConsumer<NotifyUsersConsumer>();
     x.UsingRabbitMq((ctx, cfg) =>
     {
         cfg.Host(builder.Configuration.GetConnectionString("RabbitMq"), h =>
@@ -133,6 +134,11 @@ builder.Services.AddMassTransit(x =>
         cfg.ReceiveEndpoint("gateway-media-failed", e =>
         {
             e.ConfigureConsumer<MediaProcessingFailedConsumer>(ctx);
+        });
+
+        cfg.ReceiveEndpoint("gateway-notify-users", e =>
+        {
+            e.ConfigureConsumer<NotifyUsersConsumer>(ctx);
         });
     });
 });

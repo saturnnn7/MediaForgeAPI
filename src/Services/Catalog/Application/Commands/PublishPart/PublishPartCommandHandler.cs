@@ -1,3 +1,6 @@
+using MassTransit;
+using MediaForge.Shared.Contracts.Events.Catalog;
+
 namespace MediaForge.Catalog.Application.Commands.PublishPart;
 
 public sealed class PublishPartCommandHandler(
@@ -5,7 +8,8 @@ public sealed class PublishPartCommandHandler(
     IEditionRepository editionRepository,
     IWorkRepository workRepository,
     ICurrentUserService currentUserService,
-    ICatalogUnitOfWork unitOfWork) : IRequestHandler<PublishPartCommand, Result>
+    ICatalogUnitOfWork unitOfWork,
+    IPublishEndpoint publishEndpoint) : IRequestHandler<PublishPartCommand, Result>
 {
     public async Task<Result> Handle(PublishPartCommand request, CancellationToken cancellationToken)
     {
@@ -27,6 +31,20 @@ public sealed class PublishPartCommandHandler(
         part.Publish();
 
         partRepository.Update(part);
+
+        await publishEndpoint.Publish(
+            new PartPublishedEvent(
+                Guid.NewGuid(),
+                DateTime.UtcNow,
+                Guid.NewGuid(),
+                part.Id,
+                part.EditionId,
+                edition.WorkId,
+                part.Title,
+                part.OrderMajor,
+                part.OrderMinor),
+            cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
