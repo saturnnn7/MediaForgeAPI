@@ -5,11 +5,12 @@ namespace MediaForge.Catalog.Application.Commands.CreateWork;
 public sealed class CreateWorkCommandHandler(
     IWorkRepository workRepository,
     ISeriesRepository seriesRepository,
+    ICurrentUserService currentUserService,
     ICatalogUnitOfWork unitOfWork) : IRequestHandler<CreateWorkCommand, Result<WorkSummaryDto>>
 {
     public async Task<Result<WorkSummaryDto>> Handle(CreateWorkCommand request, CancellationToken cancellationToken)
     {
-        var workResult = Work.Create(request.ChannelId, request.WorkType, request.Title);
+        var workResult = Work.Create(request.ChannelId, currentUserService.UserId, request.WorkType, request.Title);
         if (workResult.IsFailure)
             return Result.Failure<WorkSummaryDto>(workResult.Error);
 

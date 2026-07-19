@@ -16,6 +16,10 @@ public sealed class WorkConfiguration : IEntityTypeConfiguration<Work>
             .HasColumnName("channel_id")
             .IsRequired();
 
+        builder.Property(x => x.CreatorId)
+            .HasColumnName("creator_id")
+            .IsRequired();
+
         builder.Property(x => x.SeriesId)
             .HasColumnName("series_id")
             .IsRequired(false);

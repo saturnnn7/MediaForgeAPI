@@ -13,6 +13,7 @@ public sealed class Work : AggregateRoot
     private Work() { }
 
     public Guid ChannelId { get; init; }
+    public Guid CreatorId { get; private init; }
     public Guid? SeriesId { get; private set; }
     public WorkType WorkType { get; private set; }
     public string Title { get; private set; } = string.Empty;
@@ -27,7 +28,7 @@ public sealed class Work : AggregateRoot
     public IReadOnlyList<WorkContributor> Contributors => _contributors.AsReadOnly();
     public IReadOnlyList<WorkGenre> Genres => _genres.AsReadOnly();
 
-    public static Result<Work> Create(Guid channelId, WorkType workType, string title)
+    public static Result<Work> Create(Guid channelId, Guid creatorId, WorkType workType, string title)
     {
         var validation = ValidateDetails(title);
         if (validation.IsFailure)
@@ -37,6 +38,7 @@ public sealed class Work : AggregateRoot
         {
             Id = Guid.NewGuid(),
             ChannelId = channelId,
+            CreatorId = creatorId,
             WorkType = workType,
             Title = title,
             IsPublished = false,

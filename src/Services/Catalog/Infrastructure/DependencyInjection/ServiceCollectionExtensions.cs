@@ -1,6 +1,8 @@
 using MassTransit;
+using MediaForge.Catalog.Infrastructure.Consumers;
 using MediaForge.Catalog.Infrastructure.Persistence;
 using MediaForge.Catalog.Infrastructure.Persistence.Repositories;
+using MediaForge.Catalog.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,6 +26,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPartRepository, PartRepository>();
         services.AddScoped<ICatalogUnitOfWork>(sp => sp.GetRequiredService<CatalogDbContext>());
 
+        services.AddStackExchangeRedisCache(opts =>
+            opts.Configuration = configuration.GetConnectionString("Redis"));
+        services.AddScoped<ISubscriptionService, SubscriptionCacheService>();
+
         services.AddMassTransit(x =>
         {
             x.AddEntityFrameworkOutbox<CatalogDbContext>(o =>
@@ -32,12 +38,24 @@ public static class ServiceCollectionExtensions
                 o.UseBusOutbox();
             });
 
+            x.AddConsumer<UserSubscribedConsumer>();
+            x.AddConsumer<UserUnsubscribedConsumer>();
+
             x.UsingRabbitMq((ctx, cfg) =>
             {
                 cfg.Host(configuration.GetConnectionString("RabbitMq"), h =>
                 {
                     h.Username(configuration["RabbitMq:Username"] ?? "mediaforge");
                     h.Password(configuration["RabbitMq:Password"] ?? "mediaforge_dev");
+                });
+
+                cfg.ReceiveEndpoint("catalog-user-subscribed", e =>
+                {
+                    e.ConfigureConsumer<UserSubscribedConsumer>(ctx);
+                });
+                cfg.ReceiveEndpoint("catalog-user-unsubscribed", e =>
+                {
+                    e.ConfigureConsumer<UserUnsubscribedConsumer>(ctx);
                 });
 
                 cfg.ConfigureEndpoints(ctx);

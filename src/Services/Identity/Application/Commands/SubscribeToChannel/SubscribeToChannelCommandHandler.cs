@@ -1,11 +1,14 @@
+using MassTransit;
 using MediaForge.Identity.Application.Abstractions;
+using MediaForge.Shared.Contracts.Events.Identity;
 
 namespace MediaForge.Identity.Application.Commands.SubscribeToChannel;
 
 public sealed class SubscribeToChannelCommandHandler(
     ICurrentUserService currentUser,
     IChannelRepository channelRepository,
-    IIdentityUnitOfWork unitOfWork) : IRequestHandler<SubscribeToChannelCommand, Result>
+    IIdentityUnitOfWork unitOfWork,
+    IPublishEndpoint publishEndpoint) : IRequestHandler<SubscribeToChannelCommand, Result>
 {
     public async Task<Result> Handle(SubscribeToChannelCommand request, CancellationToken cancellationToken)
     {
@@ -31,6 +34,11 @@ public sealed class SubscribeToChannelCommandHandler(
 
         await channelRepository.AddSubscriptionAsync(subscription, cancellationToken);
         channelRepository.Update(channel);
+
+        await publishEndpoint.Publish(
+            new UserSubscribedToChannelEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid(), channel.Id, currentUser.UserId),
+            cancellationToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

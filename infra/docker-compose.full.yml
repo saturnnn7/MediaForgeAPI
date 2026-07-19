@@ -246,6 +246,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__CatalogDb: "Host=postgres;Port=5432;Database=catalog;Username=mediaforge;Password=mediaforge_dev"
       ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
+      ConnectionStrings__Redis: "redis:6379"
       Jwt__PublicKeyPath: /app/keys/public.pem
       Seq__Url: "http://seq:5341"
       RabbitMq__Username: "mediaforge"
@@ -254,6 +255,8 @@ services:
       - identity_keys:/app/keys:ro
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
