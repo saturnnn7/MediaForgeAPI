@@ -11,10 +11,18 @@ public sealed class PartRepository(CatalogDbContext dbContext) : IPartRepository
             .Include("_assets")
             .FirstOrDefaultAsync(x => x.Id == id, ct);
 
+    public async Task<IReadOnlyList<Part>> GetByEditionIdAsync(Guid editionId, CancellationToken ct) =>
+        await dbContext.Parts
+            .Where(x => x.EditionId == editionId)
+            .OrderBy(x => x.OrderMajor).ThenBy(x => x.OrderMinor)
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<Part>> GetByWorkIdAsync(Guid workId, CancellationToken ct) =>
         await dbContext.Parts
+            .Join(dbContext.Editions, p => p.EditionId, e => e.Id, (p, e) => new { Part = p, e.WorkId })
             .Where(x => x.WorkId == workId)
-            .OrderBy(x => x.OrderMajor).ThenBy(x => x.OrderMinor)
+            .Select(x => x.Part)
+            .OrderBy(x => x.EditionId).ThenBy(x => x.OrderMajor).ThenBy(x => x.OrderMinor)
             .ToListAsync(ct);
 
     public async Task AddAsync(Part part, CancellationToken ct) =>

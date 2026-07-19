@@ -31,7 +31,7 @@ public static class PartEndpoints
 
         app.MapPost("/api/parts", async (CreatePartRequest request, ISender sender, CancellationToken ct) =>
         {
-            var command = new CreatePartCommand(request.WorkId, request.Title, request.Description, request.OrderMajor, request.OrderMinor, request.PartType, request.CoverUrl);
+            var command = new CreatePartCommand(request.EditionId, request.Title, request.Description, request.OrderMajor, request.OrderMinor, request.PartType, request.CoverUrl);
             var result = await sender.Send(command, ct);
             return result.IsSuccess
                 ? Results.Created($"/api/parts/{result.Value.Id}", result.Value)
@@ -96,7 +96,7 @@ public static class PartEndpoints
         return app;
     }
 
-    private sealed record CreatePartRequest(Guid WorkId, string Title, string? Description, int OrderMajor, int OrderMinor, PartType PartType, string? CoverUrl);
+    private sealed record CreatePartRequest(Guid EditionId, string Title, string? Description, int OrderMajor, int OrderMinor, PartType PartType, string? CoverUrl);
 
     private sealed record UpdatePartRequest(string Title, string? Description, string? CoverUrl);
 

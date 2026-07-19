@@ -13,6 +13,7 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options,
     public DbSet<Work> Works => Set<Work>();
     public DbSet<WorkContributor> WorkContributors => Set<WorkContributor>();
     public DbSet<WorkGenre> WorkGenres => Set<WorkGenre>();
+    public DbSet<Edition> Editions => Set<Edition>();
     public DbSet<Part> Parts => Set<Part>();
     public DbSet<PartChapter> PartChapters => Set<PartChapter>();
     public DbSet<PartAsset> PartAssets => Set<PartAsset>();

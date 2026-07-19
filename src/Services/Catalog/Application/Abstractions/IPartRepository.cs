@@ -4,6 +4,7 @@ public interface IPartRepository
 {
     Task<Part?> GetByIdAsync(Guid id, CancellationToken ct);
     Task<Part?> GetByIdWithDetailsAsync(Guid id, CancellationToken ct);
+    Task<IReadOnlyList<Part>> GetByEditionIdAsync(Guid editionId, CancellationToken ct);
     Task<IReadOnlyList<Part>> GetByWorkIdAsync(Guid workId, CancellationToken ct);
     Task AddAsync(Part part, CancellationToken ct);
     void Update(Part part);

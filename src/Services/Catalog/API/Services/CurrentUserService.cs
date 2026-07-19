@@ -16,6 +16,8 @@ public sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
         }
     }
 
+    public string? Role => httpContextAccessor.HttpContext?.User.FindFirstValue("role");
+
     public bool IsAuthenticated =>
         httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false;
 }

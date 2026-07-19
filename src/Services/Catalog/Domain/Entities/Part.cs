@@ -11,7 +11,7 @@ public sealed class Part : AggregateRoot
 
     private Part() { }
 
-    public Guid WorkId { get; init; }
+    public Guid EditionId { get; init; }
     public string Title { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public int OrderMajor { get; private set; }
@@ -26,7 +26,7 @@ public sealed class Part : AggregateRoot
     public IReadOnlyList<PartChapter> Chapters => _chapters.AsReadOnly();
     public IReadOnlyList<PartAsset> Assets => _assets.AsReadOnly();
 
-    public static Result<Part> Create(Guid workId, string title, int orderMajor, int orderMinor = 0, PartType partType = PartType.Regular)
+    public static Result<Part> Create(Guid editionId, string title, int orderMajor, int orderMinor = 0, PartType partType = PartType.Regular)
     {
         var validation = ValidateDetails(title);
         if (validation.IsFailure)
@@ -35,7 +35,7 @@ public sealed class Part : AggregateRoot
         var part = new Part
         {
             Id = Guid.NewGuid(),
-            WorkId = workId,
+            EditionId = editionId,
             Title = title,
             OrderMajor = orderMajor,
             OrderMinor = orderMinor,

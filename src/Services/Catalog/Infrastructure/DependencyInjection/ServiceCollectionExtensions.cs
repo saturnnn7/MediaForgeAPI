@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGenreRepository, GenreRepository>();
         services.AddScoped<ISeriesRepository, SeriesRepository>();
         services.AddScoped<IWorkRepository, WorkRepository>();
+        services.AddScoped<IEditionRepository, EditionRepository>();
         services.AddScoped<IPartRepository, PartRepository>();
         services.AddScoped<ICatalogUnitOfWork>(sp => sp.GetRequiredService<CatalogDbContext>());
 

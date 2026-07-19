@@ -4,6 +4,7 @@ namespace MediaForge.Catalog.Application.Commands.UpdatePart;
 
 public sealed class UpdatePartCommandHandler(
     IPartRepository partRepository,
+    IEditionRepository editionRepository,
     ICatalogUnitOfWork unitOfWork) : IRequestHandler<UpdatePartCommand, Result<PartSummaryDto>>
 {
     public async Task<Result<PartSummaryDto>> Handle(UpdatePartCommand request, CancellationToken cancellationToken)
@@ -19,6 +20,8 @@ public sealed class UpdatePartCommandHandler(
         partRepository.Update(part);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(part.ToSummaryDto());
+        var edition = await editionRepository.GetByIdAsync(part.EditionId, cancellationToken);
+
+        return Result.Success(part.ToSummaryDto(edition?.NarratorTeamName));
     }
 }

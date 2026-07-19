@@ -34,6 +34,7 @@ app.MapPersonEndpoints();
 app.MapGenreEndpoints();
 app.MapSeriesEndpoints();
 app.MapWorkEndpoints();
+app.MapEditionEndpoints();
 app.MapPartEndpoints();
 app.MapChannelEndpoints();
 

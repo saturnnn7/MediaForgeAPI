@@ -2,7 +2,8 @@ namespace MediaForge.Catalog.Application.DTOs;
 
 public sealed record PartSummaryDto(
     Guid Id,
-    Guid WorkId,
+    Guid EditionId,
+    string? NarratorTeamName,
     string Title,
     int OrderMajor,
     int OrderMinor,

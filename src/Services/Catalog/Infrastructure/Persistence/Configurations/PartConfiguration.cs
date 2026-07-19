@@ -12,8 +12,8 @@ public sealed class PartConfiguration : IEntityTypeConfiguration<Part>
         builder.Property(x => x.Id)
             .HasColumnName("id");
 
-        builder.Property(x => x.WorkId)
-            .HasColumnName("work_id")
+        builder.Property(x => x.EditionId)
+            .HasColumnName("edition_id")
             .IsRequired();
 
         builder.Property(x => x.Title)
@@ -73,9 +73,9 @@ public sealed class PartConfiguration : IEntityTypeConfiguration<Part>
         builder.Navigation("_chapters").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation("_assets").UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        builder.HasIndex(x => x.WorkId).HasDatabaseName("ix_parts_work_id");
-        builder.HasIndex(x => new { x.WorkId, x.OrderMajor, x.OrderMinor })
+        builder.HasIndex(x => x.EditionId).HasDatabaseName("ix_parts_edition_id");
+        builder.HasIndex(x => new { x.EditionId, x.OrderMajor, x.OrderMinor })
             .IsUnique()
-            .HasDatabaseName("ix_parts_work_order");
+            .HasDatabaseName("ix_parts_edition_order");
     }
 }

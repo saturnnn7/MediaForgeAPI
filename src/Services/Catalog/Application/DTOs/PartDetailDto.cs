@@ -2,7 +2,7 @@ namespace MediaForge.Catalog.Application.DTOs;
 
 public sealed record PartDetailDto(
     Guid Id,
-    Guid WorkId,
+    Guid EditionId,
     string Title,
     string? Description,
     int OrderMajor,

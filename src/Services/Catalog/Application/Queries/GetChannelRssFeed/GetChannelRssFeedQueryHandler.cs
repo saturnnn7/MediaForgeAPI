@@ -6,6 +6,7 @@ namespace MediaForge.Catalog.Application.Queries.GetChannelRssFeed;
 
 public sealed class GetChannelRssFeedQueryHandler(
     IWorkRepository workRepository,
+    IEditionRepository editionRepository,
     IPartRepository partRepository,
     IConfiguration configuration) : IRequestHandler<GetChannelRssFeedQuery, Result<RssFeedDto>>
 {
@@ -22,22 +23,27 @@ public sealed class GetChannelRssFeedQueryHandler(
 
         foreach (var work in publishedWorks)
         {
-            var parts = await partRepository.GetByWorkIdAsync(work.Id, cancellationToken);
-            foreach (var part in parts.Where(p => p.IsPublished && !p.IsPrivate))
-            {
-                var partWithAssets = await partRepository.GetByIdWithDetailsAsync(part.Id, cancellationToken);
-                var firstAsset = partWithAssets?.Assets.OrderBy(a => a.SequenceOrder).FirstOrDefault();
-                var audioUrl = firstAsset is null ? null : $"{mediaApiBaseUrl}/api/media/{firstAsset.MediaAssetId}/stream";
+            var editions = await editionRepository.GetByWorkIdAsync(work.Id, cancellationToken);
 
-                items.Add(new RssFeedItemDto(
-                    part.Title,
-                    part.Description ?? work.Description,
-                    part.Id.ToString(),
-                    work.PublishedAt ?? work.CreatedAt,
-                    audioUrl,
-                    part.DurationSeconds,
-                    part.OrderMajor,
-                    part.OrderMinor));
+            foreach (var edition in editions)
+            {
+                var parts = await partRepository.GetByEditionIdAsync(edition.Id, cancellationToken);
+                foreach (var part in parts.Where(p => p.IsPublished && !p.IsPrivate))
+                {
+                    var partWithAssets = await partRepository.GetByIdWithDetailsAsync(part.Id, cancellationToken);
+                    var firstAsset = partWithAssets?.Assets.OrderBy(a => a.SequenceOrder).FirstOrDefault();
+                    var audioUrl = firstAsset is null ? null : $"{mediaApiBaseUrl}/api/media/{firstAsset.MediaAssetId}/stream";
+
+                    items.Add(new RssFeedItemDto(
+                        part.Title,
+                        part.Description ?? work.Description,
+                        part.Id.ToString(),
+                        work.PublishedAt ?? work.CreatedAt,
+                        audioUrl,
+                        part.DurationSeconds,
+                        part.OrderMajor,
+                        part.OrderMinor));
+                }
             }
         }
 

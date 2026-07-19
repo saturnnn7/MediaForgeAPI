@@ -2,10 +2,11 @@ namespace MediaForge.Catalog.Application.DTOs;
 
 public static class PartMapper
 {
-    public static PartSummaryDto ToSummaryDto(this Part part) =>
+    public static PartSummaryDto ToSummaryDto(this Part part, string? narratorTeamName = null) =>
         new(
             part.Id,
-            part.WorkId,
+            part.EditionId,
+            narratorTeamName,
             part.Title,
             part.OrderMajor,
             part.OrderMinor,
@@ -16,7 +17,7 @@ public static class PartMapper
     public static PartDetailDto ToDetailDto(this Part part) =>
         new(
             part.Id,
-            part.WorkId,
+            part.EditionId,
             part.Title,
             part.Description,
             part.OrderMajor,
