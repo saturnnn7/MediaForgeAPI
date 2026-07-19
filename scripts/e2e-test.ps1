@@ -21,19 +21,41 @@ function Write-Step($msg) { Write-Host "`n>> $msg" -ForegroundColor Cyan }
 
 function Invoke-Api {
     param($Url, $Method = "GET", $Body = $null, $Token = $null, $FilePath = $null)
-    $headers = @{ "Content-Type" = "application/json" }
+    $headers = @{}
     if ($Token) { $headers["Authorization"] = "Bearer $Token" }
+    if (-not $FilePath) { $headers["Content-Type"] = "application/json" }
     try {
-        if ($FilePath) {
-            return Invoke-WebRequest -Uri $Url -Method $Method -UseBasicParsing -InFile $FilePath -Headers $headers
-        } elseif ($Body) {
-            return Invoke-WebRequest -Uri $Url -Method $Method -UseBasicParsing -Body ($Body | ConvertTo-Json) -Headers $headers
-        } else {
-            return Invoke-WebRequest -Uri $Url -Method $Method -UseBasicParsing -Headers $headers
+        $params = @{
+            Uri = $Url
+            Method = $Method
+            UseBasicParsing = $true
+            Headers = $headers
         }
+        if ($FilePath) { $params["InFile"] = $FilePath }
+        elseif ($Body) { $params["Body"] = ($Body | ConvertTo-Json -Depth 10) }
+        return Invoke-WebRequest @params
     } catch {
-        return $_.Exception.Response
+        $errorResponse = $_.Exception.Response
+        if ($errorResponse) {
+            try {
+                $stream = $errorResponse.GetResponseStream()
+                $reader = New-Object System.IO.StreamReader($stream)
+                $errorBody = $reader.ReadToEnd()
+                Write-Host "    Error body: $errorBody" -ForegroundColor DarkRed
+            } catch {}
+        }
+        return $errorResponse
     }
+}
+
+function Get-TokenRole($token) {
+    $parts = $token.Split('.')
+    $payload = $parts[1].Replace('-', '+').Replace('_', '/')
+    $mod4 = $payload.Length % 4
+    if ($mod4) { $payload += '=' * (4 - $mod4) }
+    $decoded = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload))
+    $claims = $decoded | ConvertFrom-Json
+    return $claims.role
 }
 
 function Get-ResponseBody($response) {
@@ -75,6 +97,7 @@ function Get-Or-Create-User($email, $password, $displayName) {
 
 Write-Host "MediaForge E2E Test Suite" -ForegroundColor Yellow
 Write-Host "=========================" -ForegroundColor Yellow
+Write-Host "  [INFO] Make sure all services were restarted after key regeneration" -ForegroundColor Yellow
 $startTime = Get-Date
 
 ## PHASE 1: Health checks
@@ -119,6 +142,8 @@ $adminToken = (Get-ResponseBody $r).accessToken
 $r = Invoke-Api "$BaseUrl/api/auth/login" "POST" @{ email = "creator@e2e-test.dev"; password = "CreatorPass1!" }
 Assert-Status $r 200 "Creator login"
 $creatorToken = (Get-ResponseBody $r).accessToken
+$creatorRole = Get-TokenRole $creatorToken
+Write-Host "  [INFO] Creator token role: $creatorRole" -ForegroundColor Yellow
 
 $r = Invoke-Api "$BaseUrl/api/auth/login" "POST" @{ email = "listener@e2e-test.dev"; password = "ListenerPass1!" }
 Assert-Status $r 200 "Listener login"
