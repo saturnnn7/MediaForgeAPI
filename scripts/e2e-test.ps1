@@ -277,23 +277,33 @@ if (-not $partId) {
     $assetId = $uploadData.assetId
     $uploadUrl = $uploadData.uploadUrl
 
-    # Upload to MinIO using WebClient - it sends minimal headers by default, unlike
-    # curl.exe (adds User-Agent/Accept) or Invoke-WebRequest, which MinIO's presigned
-    # URL signature validation rejects with 403 SignatureDoesNotMatch
+    # Upload to MinIO via HttpClient with all default headers cleared - MinIO's presigned
+    # URL signature validation rejects any header not included in the signature
     if (-not $uploadUrl) {
         Write-Fail "Upload URL is empty - skipping upload"
     } else {
-        $webClient = New-Object System.Net.WebClient
+        Add-Type -AssemblyName System.Net.Http
+
+        $handler = New-Object System.Net.Http.HttpClientHandler
+        $httpClient = New-Object System.Net.Http.HttpClient($handler)
+        $httpClient.DefaultRequestHeaders.Clear()
+
+        $fileBytes = [System.IO.File]::ReadAllBytes($AudioFilePath)
+        $content = New-Object System.Net.Http.ByteArrayContent($fileBytes)
+
         try {
-            $webClient.UploadFile($uploadUrl, "PUT", $AudioFilePath)
-            Write-Pass "Upload file to MinIO (HTTP 200)"
-            $uploadSuccess = $true
-        } catch [System.Net.WebException] {
-            $statusCode = [int]$_.Exception.Response.StatusCode
-            Write-Fail "Upload file to MinIO (Expected 200, got $statusCode)"
-            $uploadSuccess = $false
+            $uploadResult = $httpClient.PutAsync($uploadUrl, $content).GetAwaiter().GetResult()
+            $statusCode = [int]$uploadResult.StatusCode
+            if ($statusCode -eq 200) {
+                Write-Pass "Upload file to MinIO (HTTP 200)"
+                $uploadSuccess = $true
+            } else {
+                $body = $uploadResult.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                Write-Fail "Upload file to MinIO (Expected 200, got $statusCode): $body"
+                $uploadSuccess = $false
+            }
         } finally {
-            $webClient.Dispose()
+            $httpClient.Dispose()
         }
     }
 
