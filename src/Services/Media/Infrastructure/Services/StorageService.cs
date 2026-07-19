@@ -102,5 +102,18 @@ public sealed class StorageService(IAmazonS3 s3Client) : IStorageService
         }, ct);
 
     public Task<string> GenerateImageUploadUrlAsync(string objectKey, CancellationToken ct)
-        => GenerateUploadUrlAsync("mediaforge-images", objectKey, "application/octet-stream", TimeSpan.FromMinutes(15), ct);
+    {
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = "mediaforge-images",
+            Key = objectKey,
+            Verb = HttpVerb.PUT,
+            Expires = DateTime.UtcNow.AddMinutes(15)
+        };
+
+        var url = s3Client.GetPreSignedURL(request)
+            .Replace("https://localhost", "http://localhost", StringComparison.OrdinalIgnoreCase);
+
+        return Task.FromResult(url);
+    }
 }

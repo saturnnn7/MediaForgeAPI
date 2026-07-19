@@ -28,3 +28,7 @@ script:post-response {
     bru.setVar("imageUrl", res.body.imageUrl);
   }
 }
+
+// Note: the pre-signed URL does not lock in a Content-Type.
+// When PUTting the file to imageUploadUrl, do NOT send a Content-Type header,
+// or the request will fail with SignatureDoesNotMatch.
