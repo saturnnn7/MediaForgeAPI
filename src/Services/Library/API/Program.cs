@@ -34,6 +34,7 @@ app.MapLibraryEntryEndpoints();
 app.MapListeningProgressEndpoints();
 app.MapUserListEndpoints();
 app.MapReviewEndpoints();
+app.MapAdminEndpoints();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

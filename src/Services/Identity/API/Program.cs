@@ -45,6 +45,7 @@ app.MapChannelEndpoints();
 app.MapFriendEndpoints();
 app.MapAuthorFollowEndpoints();
 app.MapNotificationEndpoints();
+app.MapAdminEndpoints();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

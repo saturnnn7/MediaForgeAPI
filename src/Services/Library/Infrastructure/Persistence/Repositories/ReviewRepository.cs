@@ -34,6 +34,9 @@ public sealed class ReviewRepository(LibraryDbContext dbContext) : IReviewReposi
     public Task<ReviewComment?> GetCommentByIdAsync(Guid commentId, CancellationToken ct) =>
         dbContext.ReviewComments.FirstOrDefaultAsync(x => x.Id == commentId, ct);
 
+    public void UpdateComment(ReviewComment comment) =>
+        dbContext.ReviewComments.Update(comment);
+
     public async Task AddReactionAsync(ReviewReaction reaction, CancellationToken ct) =>
         await dbContext.ReviewReactions.AddAsync(reaction, ct);
 
@@ -57,4 +60,17 @@ public sealed class ReviewRepository(LibraryDbContext dbContext) : IReviewReposi
 
     public async Task AddReportAsync(CommentReport report, CancellationToken ct) =>
         await dbContext.CommentReports.AddAsync(report, ct);
+
+    public Task<CommentReport?> GetReportByIdAsync(Guid reportId, CancellationToken ct) =>
+        dbContext.CommentReports.FirstOrDefaultAsync(x => x.Id == reportId, ct);
+
+    public async Task<IReadOnlyList<CommentReport>> GetReportsAsync(int page, int pageSize, CancellationToken ct) =>
+        await dbContext.CommentReports
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+    public void UpdateReport(CommentReport report) =>
+        dbContext.CommentReports.Update(report);
 }

@@ -42,6 +42,14 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
         builder.Property(u => u.CreatedAt)
             .HasColumnName("created_at");
 
+        builder.Property(u => u.IsBanned)
+            .HasColumnName("is_banned")
+            .HasDefaultValue(false);
+
+        builder.Property(u => u.BanReason)
+            .HasColumnName("ban_reason")
+            .IsRequired(false);
+
         builder.OwnsMany(u => u.RefreshTokens, rt =>
         {
             rt.ToTable("refresh_tokens");

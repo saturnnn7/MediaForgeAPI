@@ -12,6 +12,8 @@ public sealed class CommentReport
     public Guid ReporterId { get; init; }
     public string Reason { get; private set; } = string.Empty;
     public DateTime CreatedAt { get; init; }
+    public bool IsResolved { get; private set; }
+    public DateTime? ResolvedAt { get; private set; }
 
     public static CommentReport Create(Guid targetId, ReactionTarget targetType, Guid reporterId, string reason) =>
         new()
@@ -23,4 +25,16 @@ public sealed class CommentReport
             Reason = reason.Length > MaxReasonLength ? reason[..MaxReasonLength] : reason,
             CreatedAt = DateTime.UtcNow
         };
+
+    public Result Resolve()
+    {
+        if (IsResolved)
+        {
+            return Result.Failure(Error.Conflict("CommentReport", "Report is already resolved."));
+        }
+
+        IsResolved = true;
+        ResolvedAt = DateTime.UtcNow;
+        return Result.Success();
+    }
 }

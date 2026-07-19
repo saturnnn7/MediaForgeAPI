@@ -32,6 +32,14 @@ public sealed class CommentReportConfiguration : IEntityTypeConfiguration<Commen
         builder.Property(x => x.CreatedAt)
             .HasColumnName("created_at");
 
+        builder.Property(x => x.IsResolved)
+            .HasColumnName("is_resolved")
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.ResolvedAt)
+            .HasColumnName("resolved_at")
+            .IsRequired(false);
+
         builder.HasIndex(x => x.TargetId).HasDatabaseName("ix_comment_reports_target_id");
         builder.HasIndex(x => x.ReporterId).HasDatabaseName("ix_comment_reports_reporter_id");
     }

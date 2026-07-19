@@ -10,9 +10,13 @@ public interface IReviewRepository
     void Update(Review review);
     Task AddCommentAsync(ReviewComment comment, CancellationToken ct);
     Task<ReviewComment?> GetCommentByIdAsync(Guid commentId, CancellationToken ct);
+    void UpdateComment(ReviewComment comment);
     Task AddReactionAsync(ReviewReaction reaction, CancellationToken ct);
     Task<ReviewReaction?> GetReactionAsync(Guid targetId, Guid userId, string emoji, CancellationToken ct);
     Task<IReadOnlyList<ReviewReaction>> GetReactionsAsync(Guid targetId, CancellationToken ct);
     Task RemoveReactionAsync(Guid targetId, Guid userId, string emoji, CancellationToken ct);
     Task AddReportAsync(CommentReport report, CancellationToken ct);
+    Task<CommentReport?> GetReportByIdAsync(Guid reportId, CancellationToken ct);
+    Task<IReadOnlyList<CommentReport>> GetReportsAsync(int page, int pageSize, CancellationToken ct);
+    void UpdateReport(CommentReport report);
 }

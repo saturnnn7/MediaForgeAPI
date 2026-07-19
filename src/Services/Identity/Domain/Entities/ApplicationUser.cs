@@ -15,6 +15,8 @@ public sealed class ApplicationUser : AggregateRoot
     public bool IsEmailVerified { get; private set; }
     public UserRole Role { get; private set; } = UserRole.Listener;
     public DateTime CreatedAt { get; init; }
+    public bool IsBanned { get; private set; }
+    public string? BanReason { get; private set; }
     public Channel? Channel { get; private set; }
 
     public IReadOnlyList<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
@@ -93,6 +95,36 @@ public sealed class ApplicationUser : AggregateRoot
     public Result RevokeCreator()
     {
         Role = UserRole.Listener;
+        return Result.Success();
+    }
+
+    public Result ChangeRole(UserRole role)
+    {
+        Role = role;
+        return Result.Success();
+    }
+
+    public Result Ban(string? reason)
+    {
+        if (IsBanned)
+        {
+            return Result.Failure(Error.Conflict("User", "User is already banned."));
+        }
+
+        IsBanned = true;
+        BanReason = reason;
+        return Result.Success();
+    }
+
+    public Result Unban()
+    {
+        if (!IsBanned)
+        {
+            return Result.Failure(Error.Conflict("User", "User is not banned."));
+        }
+
+        IsBanned = false;
+        BanReason = null;
         return Result.Success();
     }
 

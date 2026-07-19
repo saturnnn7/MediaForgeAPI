@@ -22,6 +22,11 @@ public sealed class LoginCommandHandler(
             return Result.Failure<TokensDto>(Error.Validation("Password", "Invalid credentials."));
         }
 
+        if (user.IsBanned)
+        {
+            return Result.Failure<TokensDto>(Error.Unauthorized("Account is banned."));
+        }
+
         var tokens = await tokenService.GenerateTokensAsync(user, cancellationToken);
 
         user.AddRefreshToken(global::MediaForge.Identity.Domain.Entities.RefreshToken.Create(tokens.RefreshToken, tokens.ExpiresAt));

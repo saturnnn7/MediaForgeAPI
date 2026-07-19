@@ -17,6 +17,22 @@ public sealed class WorkRequestRepository(CatalogDbContext dbContext) : IWorkReq
             .OrderBy(x => x.CreatedAt)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<WorkRequest>> GetAllAsync(WorkRequestStatus? status, int page, int pageSize, CancellationToken ct)
+    {
+        var query = dbContext.WorkRequests.AsQueryable();
+
+        if (status is not null)
+        {
+            query = query.Where(x => x.Status == status);
+        }
+
+        return await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+    }
+
     public async Task AddAsync(WorkRequest request, CancellationToken ct) =>
         await dbContext.WorkRequests.AddAsync(request, ct);
 
