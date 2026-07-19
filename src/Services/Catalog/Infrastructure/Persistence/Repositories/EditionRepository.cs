@@ -12,6 +12,7 @@ public sealed class EditionRepository(CatalogDbContext dbContext) : IEditionRepo
 
     public async Task<IReadOnlyList<Edition>> GetByWorkIdAsync(Guid workId, CancellationToken ct) =>
         await dbContext.Editions
+            .Include("_parts")
             .Where(x => x.WorkId == workId)
             .OrderByDescending(x => x.IsDefault).ThenBy(x => x.CreatedAt)
             .ToListAsync(ct);

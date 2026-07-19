@@ -9,14 +9,8 @@ public sealed class GetWorkEditionsQueryHandler(IEditionRepository editionReposi
     {
         var editions = await editionRepository.GetByWorkIdAsync(request.WorkId, cancellationToken);
 
-        var result = new List<EditionWithPartsDto>(editions.Count);
-        foreach (var edition in editions)
-        {
-            var editionWithParts = await editionRepository.GetByIdWithPartsAsync(edition.Id, cancellationToken);
-            if (editionWithParts is not null)
-                result.Add(editionWithParts.ToWithPartsDto());
-        }
-
-        return Result.Success<IReadOnlyList<EditionWithPartsDto>>(result);
+        return Result.Success<IReadOnlyList<EditionWithPartsDto>>(editions
+            .Select(e => e.ToWithPartsDto())
+            .ToList());
     }
 }
