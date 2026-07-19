@@ -16,7 +16,9 @@ public static class SearchEndpoints
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(result.Error);
         })
-        .RequireAuthorization();
+        .RequireAuthorization()
+        .WithSummary("Search across all media")
+        .WithDescription("Full-text search over works, persons, and series combined. Paginated, max 50 per page.");
 
         app.MapGet("/api/search/works", async (string q, ISender sender, CancellationToken ct, int page = 1, int pageSize = 20) =>
         {

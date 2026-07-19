@@ -19,7 +19,10 @@ public static class ReviewEndpoints
             return result.IsSuccess
                 ? Results.Created($"/api/reviews/{result.Value.Id}", result.Value)
                 : EndpointResults.ToHttpResult(result);
-        }).RequireAuthorization();
+        })
+        .RequireAuthorization()
+        .WithSummary("Create a review for a work")
+        .WithDescription("Text supports spoiler syntax (||text||) when ContainsSpoiler is true.");
 
         app.MapPut("/api/reviews/{reviewId:guid}", async (Guid reviewId, EditReviewRequest request, ISender sender, CancellationToken ct) =>
         {

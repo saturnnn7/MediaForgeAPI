@@ -18,7 +18,9 @@ public static class AuthEndpoints
             return result.IsSuccess
                 ? Results.Created($"/api/users/{result.Value.Id}", result.Value)
                 : Results.BadRequest(result.Error);
-        });
+        })
+        .WithSummary("Register a new user account")
+        .WithDescription("Creates a new user with Listener role. Email verification required before uploading.");
 
         group.MapPost("/login", async (LoginCommand command, ISender sender, CancellationToken ct) =>
         {
@@ -26,7 +28,9 @@ public static class AuthEndpoints
             return result.IsSuccess
                 ? Results.Ok(result.Value)
                 : Results.Unauthorized();
-        });
+        })
+        .WithSummary("Authenticate a user")
+        .WithDescription("Validates credentials and returns access/refresh tokens. Fails if the account is banned.");
 
         group.MapPost("/refresh", async (RefreshTokenCommand command, ISender sender, CancellationToken ct) =>
         {

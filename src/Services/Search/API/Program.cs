@@ -7,8 +7,10 @@ using MediaForge.Search.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Scalar.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +43,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddValidatorsFromAssembly(typeof(SearchMediaQuery).Assembly);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(opts =>
+{
+    opts.SwaggerDoc("v1", new OpenApiInfo { Title = "MediaForge - Search API", Version = "v1" });
+    opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Enter your JWT token"
+    });
+    opts.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
@@ -61,6 +82,15 @@ app.UseSerilogRequestLogging(opts =>
 });
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseSwagger();
+app.MapScalarApiReference(opts =>
+{
+    opts.Title = "MediaForge - Search API";
+    opts.Theme = ScalarTheme.DeepSpace;
+    opts.OpenApiRoutePattern = "/swagger/v1/swagger.json";
+});
+
 app.MapSearchEndpoints();
 
 app.MapHealthChecks("/health", new HealthCheckOptions

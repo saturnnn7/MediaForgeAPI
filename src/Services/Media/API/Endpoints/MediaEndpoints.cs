@@ -12,7 +12,9 @@ public static class MediaEndpoints
             return result.IsSuccess
                 ? Results.Created($"/api/media/{result.Value.AssetId}", result.Value)
                 : ToHttpResult(result);
-        });
+        })
+        .WithSummary("Request a presigned upload URL")
+        .WithDescription("Creates a pending media asset and returns a presigned S3 URL for direct client upload.");
 
         group.MapPost("/{assetId:guid}/confirm-upload", async (Guid assetId, ISender sender, CancellationToken ct) =>
         {

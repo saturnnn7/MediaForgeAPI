@@ -22,7 +22,9 @@ public static class WorkEndpoints
         {
             var result = await sender.Send(new GetWorkQuery(workId), ct);
             return EndpointResults.ToHttpResult(result);
-        });
+        })
+        .WithSummary("Get a work by id")
+        .WithDescription("Returns full work details including contributors, genres, and editions.");
 
         app.MapGet("/api/channels/{channelId:guid}/works", async (Guid channelId, ISender sender, CancellationToken ct, int page = 1, int pageSize = 20) =>
         {

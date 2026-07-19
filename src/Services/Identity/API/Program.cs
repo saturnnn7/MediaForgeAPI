@@ -8,6 +8,8 @@ using MediaForge.Shared.Infrastructure.Migrations;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Duende.IdentityServer.EntityFramework.DbContexts;
+using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,25 @@ builder.Host.UseSerilog((ctx, cfg) =>
 });
 
 builder.Services.AddIdentityServices(builder.Configuration);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(opts =>
+{
+    opts.SwaggerDoc("v1", new OpenApiInfo { Title = "MediaForge - Identity API", Version = "v1" });
+    opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Enter your JWT token"
+    });
+    opts.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // builder.WebHost.ConfigureKestrel(opts =>
 // {
@@ -38,6 +59,15 @@ app.UseRouting();
 app.UseIdentityServer();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseSwagger();
+app.MapScalarApiReference(opts =>
+{
+    opts.Title = "MediaForge - Identity API";
+    opts.Theme = ScalarTheme.DeepSpace;
+    opts.OpenApiRoutePattern = "/swagger/v1/swagger.json";
+});
+
 app.MapGrpcService<UserGrpcService>();
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
