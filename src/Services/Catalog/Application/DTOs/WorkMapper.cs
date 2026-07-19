@@ -18,7 +18,8 @@ public static class WorkMapper
     public static WorkDetailDto ToDetailDto(
         this Work work,
         IReadOnlyList<ContributorDto> contributors,
-        IReadOnlyList<GenreDto> genres) =>
+        IReadOnlyList<GenreDto> genres,
+        IReadOnlyList<ExternalRatingDto> externalRatings) =>
         new(
             work.Id,
             work.ChannelId,
@@ -33,5 +34,6 @@ public static class WorkMapper
             work.PublishedAt,
             work.CreatedAt,
             contributors,
-            genres);
+            genres,
+            externalRatings);
 }

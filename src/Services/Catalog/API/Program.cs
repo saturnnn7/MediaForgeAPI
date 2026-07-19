@@ -38,6 +38,7 @@ app.MapEditionEndpoints();
 app.MapPartEndpoints();
 app.MapChannelEndpoints();
 app.MapWorkRequestEndpoints();
+app.MapExternalRatingEndpoints();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

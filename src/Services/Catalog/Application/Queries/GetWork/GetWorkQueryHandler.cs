@@ -5,6 +5,7 @@ namespace MediaForge.Catalog.Application.Queries.GetWork;
 public sealed class GetWorkQueryHandler(
     IWorkRepository workRepository,
     IGenreRepository genreRepository,
+    IExternalRatingRepository externalRatingRepository,
     ICurrentUserService currentUserService,
     ISubscriptionService subscriptionService) : IRequestHandler<GetWorkQuery, Result<WorkDetailDto>>
 {
@@ -39,6 +40,9 @@ public sealed class GetWorkQueryHandler(
                 genreDtos.Add(genre.ToDto());
         }
 
-        return Result.Success(work.ToDetailDto(contributors, genreDtos));
+        var externalRatings = await externalRatingRepository.GetByWorkIdAsync(request.WorkId, cancellationToken);
+        var externalRatingDtos = externalRatings.Select(x => x.ToDto()).ToList();
+
+        return Result.Success(work.ToDetailDto(contributors, genreDtos, externalRatingDtos));
     }
 }

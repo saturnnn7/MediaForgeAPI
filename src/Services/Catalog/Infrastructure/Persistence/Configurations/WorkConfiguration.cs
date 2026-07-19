@@ -81,6 +81,11 @@ public sealed class WorkConfiguration : IEntityTypeConfiguration<Work>
             .HasForeignKey(e => e.WorkId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasMany<ExternalRating>()
+            .WithOne()
+            .HasForeignKey(x => x.WorkId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Navigation("_contributors").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation("_genres").UsePropertyAccessMode(PropertyAccessMode.Field);
 

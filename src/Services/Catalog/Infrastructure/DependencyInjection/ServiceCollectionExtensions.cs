@@ -26,11 +26,19 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEditionRepository, EditionRepository>();
         services.AddScoped<IPartRepository, PartRepository>();
         services.AddScoped<IWorkRequestRepository, WorkRequestRepository>();
+        services.AddScoped<IExternalRatingRepository, ExternalRatingRepository>();
         services.AddScoped<ICatalogUnitOfWork>(sp => sp.GetRequiredService<CatalogDbContext>());
 
         services.AddStackExchangeRedisCache(opts =>
             opts.Configuration = configuration.GetConnectionString("Redis"));
         services.AddScoped<ISubscriptionService, SubscriptionCacheService>();
+
+        services.AddHttpClient("external-ratings", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.Add("User-Agent", "MediaForge/1.0");
+        });
+        services.AddScoped<IExternalRatingFetcher, ExternalRatingFetcher>();
 
         services.AddMassTransit(x =>
         {

@@ -14,4 +14,5 @@ public sealed record WorkDetailDto(
     DateTime? PublishedAt,
     DateTime CreatedAt,
     IReadOnlyList<ContributorDto> Contributors,
-    IReadOnlyList<GenreDto> Genres);
+    IReadOnlyList<GenreDto> Genres,
+    IReadOnlyList<ExternalRatingDto> ExternalRatings);
