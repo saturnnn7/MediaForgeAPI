@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: mediaforge
       POSTGRES_PASSWORD: mediaforge_dev
-      POSTGRES_MULTIPLE_DATABASES: identity,media,search
+      POSTGRES_MULTIPLE_DATABASES: identity,media,search,catalog
     ports: ["5432:5432"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -236,6 +236,34 @@ services:
         limits:
           memory: 256m
 
+  catalog-api:
+    build:
+      context: ..
+      dockerfile: src/Services/Catalog/API/Dockerfile
+    container_name: mf-catalog-api
+    ports: ["5005:8080"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__CatalogDb: "Host=postgres;Port=5432;Database=catalog;Username=mediaforge;Password=mediaforge_dev"
+      ConnectionStrings__RabbitMq: "amqp://mediaforge:mediaforge_dev@rabbitmq:5672"
+      Jwt__PublicKeyPath: /app/keys/public.pem
+      Seq__Url: "http://seq:5341"
+      RabbitMq__Username: "mediaforge"
+      RabbitMq__Password: "mediaforge_dev"
+    volumes:
+      - identity_keys:/app/keys:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keygen:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
   gateway:
     build:
       context: ..
@@ -262,6 +290,8 @@ services:
       media-api:
         condition: service_started
       search-api:
+        condition: service_started
+      catalog-api:
         condition: service_started
     deploy:
       resources:

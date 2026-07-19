@@ -109,7 +109,9 @@ builder.Services.AddHealthChecks()
     .AddUrlGroup(new Uri(builder.Configuration["HealthChecks:IdentityApiUrl"]
                  ?? "http://localhost:5001/health/live"), name: "identity-api", tags: ["upstream"])
     .AddUrlGroup(new Uri(builder.Configuration["HealthChecks:MediaApiUrl"]
-                 ?? "http://localhost:5002/health/live"), name: "media-api", tags: ["upstream"]);
+                 ?? "http://localhost:5002/health/live"), name: "media-api", tags: ["upstream"])
+    .AddUrlGroup(new Uri(builder.Configuration["HealthChecks:CatalogApiUrl"]
+                 ?? "http://localhost:5005/health/live"), name: "catalog-api", tags: ["upstream"]);
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
