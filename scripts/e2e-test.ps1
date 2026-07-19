@@ -165,13 +165,19 @@ Write-Step "Phase 4: Catalog - Genre, Person, Series"
 # Create Genre (dedicated slug to avoid clashing with prior runs)
 $r = Invoke-Api "$BaseUrl/api/genres" "POST" @{ name = "Fantasy"; slug = "fantasy-e2e"; description = "Fantasy genre" } $adminToken
 if ([int]$r.StatusCode -eq 409) {
+    # No lookup-by-slug endpoint exists - list all genres and find it by slug
     Write-Host "  [INFO] Genre fantasy-e2e already exists, fetching existing" -ForegroundColor Yellow
-    $r = Invoke-Api "$BaseUrl/api/genres/fantasy-e2e" "GET" $null $adminToken
-    Assert-Status $r 200 "Fetch existing genre"
+    $r = Invoke-Api "$BaseUrl/api/genres" "GET" $null $adminToken
+    Assert-Status $r 200 "List genres"
+    $existing = (Get-ResponseBody $r) | Where-Object { $_.slug -eq "fantasy-e2e" }
+    if ($existing) {
+        $genreId = $existing.id
+        Write-Host "  [INFO] Using existing genre: $genreId" -ForegroundColor Yellow
+    }
 } else {
     Assert-Status $r 201 "Create genre"
+    $genreId = (Get-ResponseBody $r).id
 }
-$genreId = (Get-ResponseBody $r).id
 
 # Create Person (Author)
 $r = Invoke-Api "$BaseUrl/api/persons" "POST" @{ name = "Test Author"; bio = "A great author" } $adminToken
@@ -186,14 +192,15 @@ $r = Invoke-Api "$BaseUrl/api/channels" "POST" @{ name = "E2E Creator Channel" }
 if ([int]$r.StatusCode -eq 201) {
     Write-Pass "Create channel (HTTP 201)"
     $channelId = (Get-ResponseBody $r).id
-} else {
-    Write-Fail "Create channel (HTTP $([int]$r.StatusCode))"
-    # Fall back to the creator's existing channel, if any
-    $r = Invoke-Api "$BaseUrl/api/channels/me" "GET" $null $creatorToken
-    if ([int]$r.StatusCode -eq 200) {
-        $channelId = (Get-ResponseBody $r).id
+} elseif ([int]$r.StatusCode -eq 400) {
+    # Already has a channel (expected on re-runs) - fetch the existing one
+    $r2 = Invoke-Api "$BaseUrl/api/channels/me" "GET" $null $creatorToken
+    if ([int]$r2.StatusCode -eq 200) {
+        $channelId = (Get-ResponseBody $r2).id
         Write-Host "  [INFO] Using existing channel $channelId" -ForegroundColor Yellow
     }
+} else {
+    Write-Fail "Create channel (Expected 201, got $([int]$r.StatusCode))"
 }
 
 ## PHASE 6: Work Request & Approval
@@ -270,24 +277,23 @@ if (-not $partId) {
     $assetId = $uploadData.assetId
     $uploadUrl = $uploadData.uploadUrl
 
-    # Upload to MinIO using .NET HttpClient to avoid URL truncation
-    # (Invoke-WebRequest mangles presigned URLs containing + and % in the signature)
+    # Upload to MinIO using curl.exe (available on Windows 10+)
+    # (Invoke-WebRequest and System.Net.Http both mangle/are unavailable for presigned URLs
+    # containing + and % in the signature under PowerShell 5.1)
     if (-not $uploadUrl) {
         Write-Fail "Upload URL is empty - skipping upload"
     } else {
-        $httpClient = New-Object System.Net.Http.HttpClient
-        $fileStream = [System.IO.File]::OpenRead($AudioFilePath)
-        $content = New-Object System.Net.Http.StreamContent($fileStream)
-        $content.Headers.ContentType = $null
-        $uploadResult = $httpClient.PutAsync($uploadUrl, $content).GetAwaiter().GetResult()
-        $fileStream.Dispose()
-        $httpClient.Dispose()
+        $curlResult = & curl.exe -s -o NUL -w "%{http_code}" `
+            -X PUT `
+            --data-binary "@$AudioFilePath" `
+            "$uploadUrl"
 
-        if ($uploadResult.StatusCode -eq [System.Net.HttpStatusCode]::OK) {
+        if ($curlResult -eq "200") {
             Write-Pass "Upload file to MinIO (HTTP 200)"
+            $uploadSuccess = $true
         } else {
-            $statusCode = [int]$uploadResult.StatusCode
-            Write-Fail "Upload file to MinIO (Expected 200, got $statusCode)"
+            Write-Fail "Upload file to MinIO (Expected 200, got $curlResult)"
+            $uploadSuccess = $false
         }
     }
 
