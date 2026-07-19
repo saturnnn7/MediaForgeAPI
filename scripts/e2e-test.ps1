@@ -270,10 +270,26 @@ if (-not $partId) {
     $assetId = $uploadData.assetId
     $uploadUrl = $uploadData.uploadUrl
 
-    # Upload to MinIO
-    $uploadHeaders = @{}
-    $uploadResponse = Invoke-WebRequest -Uri $uploadUrl -Method PUT -UseBasicParsing -InFile $AudioFilePath -Headers $uploadHeaders
-    Assert-Status $uploadResponse 200 "Upload file to MinIO"
+    # Upload to MinIO using .NET HttpClient to avoid URL truncation
+    # (Invoke-WebRequest mangles presigned URLs containing + and % in the signature)
+    if (-not $uploadUrl) {
+        Write-Fail "Upload URL is empty - skipping upload"
+    } else {
+        $httpClient = New-Object System.Net.Http.HttpClient
+        $fileStream = [System.IO.File]::OpenRead($AudioFilePath)
+        $content = New-Object System.Net.Http.StreamContent($fileStream)
+        $content.Headers.ContentType = $null
+        $uploadResult = $httpClient.PutAsync($uploadUrl, $content).GetAwaiter().GetResult()
+        $fileStream.Dispose()
+        $httpClient.Dispose()
+
+        if ($uploadResult.StatusCode -eq [System.Net.HttpStatusCode]::OK) {
+            Write-Pass "Upload file to MinIO (HTTP 200)"
+        } else {
+            $statusCode = [int]$uploadResult.StatusCode
+            Write-Fail "Upload file to MinIO (Expected 200, got $statusCode)"
+        }
+    }
 
     # Confirm upload
     $r = Invoke-Api "$BaseUrl/api/media/$assetId/confirm-upload" "POST" $null $creatorToken
