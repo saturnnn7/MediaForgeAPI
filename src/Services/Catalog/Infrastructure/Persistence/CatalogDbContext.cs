@@ -17,6 +17,7 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options,
     public DbSet<Part> Parts => Set<Part>();
     public DbSet<PartChapter> PartChapters => Set<PartChapter>();
     public DbSet<PartAsset> PartAssets => Set<PartAsset>();
+    public DbSet<WorkRequest> WorkRequests => Set<WorkRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

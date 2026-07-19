@@ -37,6 +37,7 @@ app.MapWorkEndpoints();
 app.MapEditionEndpoints();
 app.MapPartEndpoints();
 app.MapChannelEndpoints();
+app.MapWorkRequestEndpoints();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

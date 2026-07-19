@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IWorkRepository, WorkRepository>();
         services.AddScoped<IEditionRepository, EditionRepository>();
         services.AddScoped<IPartRepository, PartRepository>();
+        services.AddScoped<IWorkRequestRepository, WorkRequestRepository>();
         services.AddScoped<ICatalogUnitOfWork>(sp => sp.GetRequiredService<CatalogDbContext>());
 
         services.AddStackExchangeRedisCache(opts =>
