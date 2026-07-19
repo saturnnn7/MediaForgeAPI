@@ -86,7 +86,10 @@ public sealed class ElasticsearchSearchService(ElasticsearchClient client) : ISe
                     .Type(TextQueryType.BestFields)
                     .Fuzziness(new Fuzziness("AUTO")))), ct);
 
-        var totalCount = response.HitsMetadata?.Total?.Match(totalHits => totalHits.Value, longValue => longValue) ?? 0;
+        if (!response.IsValidResponse || response.HitsMetadata is null)
+            return new SearchResultDto<MediaDocument>(Array.Empty<MediaDocument>(), 0, page, pageSize);
+
+        var totalCount = response.HitsMetadata.Total?.Match(totalHits => totalHits.Value, longValue => longValue) ?? 0;
 
         return new SearchResultDto<MediaDocument>(
             response.Documents.ToList().AsReadOnly(),
@@ -118,7 +121,10 @@ public sealed class ElasticsearchSearchService(ElasticsearchClient client) : ISe
                     .Type(TextQueryType.BestFields)
                     .Fuzziness(new Fuzziness("AUTO")))), ct);
 
-        var totalCount = response.HitsMetadata?.Total?.Match(totalHits => totalHits.Value, longValue => longValue) ?? 0;
+        if (!response.IsValidResponse || response.HitsMetadata is null)
+            return new SearchResultDto<WorkDocument>(Array.Empty<WorkDocument>(), 0, page, pageSize);
+
+        var totalCount = response.HitsMetadata.Total?.Match(totalHits => totalHits.Value, longValue => longValue) ?? 0;
 
         return new SearchResultDto<WorkDocument>(
             response.Documents.ToList().AsReadOnly(),
@@ -150,7 +156,10 @@ public sealed class ElasticsearchSearchService(ElasticsearchClient client) : ISe
                     .Type(TextQueryType.BestFields)
                     .Fuzziness(new Fuzziness("AUTO")))), ct);
 
-        var totalCount = response.HitsMetadata?.Total?.Match(totalHits => totalHits.Value, longValue => longValue) ?? 0;
+        if (!response.IsValidResponse || response.HitsMetadata is null)
+            return new SearchResultDto<PersonDocument>(Array.Empty<PersonDocument>(), 0, page, pageSize);
+
+        var totalCount = response.HitsMetadata.Total?.Match(totalHits => totalHits.Value, longValue => longValue) ?? 0;
 
         return new SearchResultDto<PersonDocument>(
             response.Documents.ToList().AsReadOnly(),

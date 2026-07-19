@@ -41,14 +41,12 @@ function Assert-Status($response, $expected, $stepName) {
     $actual = if ($response -is [System.Net.HttpWebResponse]) {
         [int]$response.StatusCode
     } else {
-        $response.StatusCode
+        [int]$response.StatusCode
     }
     if ($actual -eq $expected) {
         Write-Pass "$stepName (HTTP $actual)"
-        return $true
     } else {
         Write-Fail "$stepName (Expected $expected, got $actual)"
-        return $false
     }
 }
 
@@ -105,6 +103,15 @@ Write-Host "  [INFO] Verify emails: docker exec -it mf-postgres psql -U mediafor
 Write-Host "  Press ENTER after verifying emails..." -ForegroundColor Yellow
 Read-Host
 
+# Re-login after pause to get fresh tokens
+$r = Invoke-Api "$BaseUrl/api/auth/login" "POST" @{ email = "admin@e2e-test.dev"; password = "AdminPass1!" }
+$adminToken = (Get-ResponseBody $r).accessToken
+$r = Invoke-Api "$BaseUrl/api/auth/login" "POST" @{ email = "creator@e2e-test.dev"; password = "CreatorPass1!" }
+$creatorToken = (Get-ResponseBody $r).accessToken
+$r = Invoke-Api "$BaseUrl/api/auth/login" "POST" @{ email = "listener@e2e-test.dev"; password = "ListenerPass1!" }
+$listenerToken = (Get-ResponseBody $r).accessToken
+Write-Host "  [INFO] Tokens refreshed after pause" -ForegroundColor Yellow
+
 ## PHASE 3: Login & Tokens
 Write-Step "Phase 3: Login"
 
@@ -156,7 +163,7 @@ Assert-Status $r 201 "Submit work request"
 $requestId = (Get-ResponseBody $r).id
 
 # Admin approves
-$r = Invoke-Api "$CatalogUrl/api/work-requests/$requestId/approve" "POST" @{ channelId = $channelId } $adminToken
+$r = Invoke-Api "$BaseUrl/api/work-requests/$requestId/approve" "POST" @{ channelId = $channelId } $adminToken
 Assert-Status $r 200 "Admin approves work request"
 $workId = (Get-ResponseBody $r).resultingWorkId
 
@@ -168,7 +175,7 @@ Assert-Status $r 200 "Work created from request"
 Write-Step "Phase 7: Edition & Parts"
 
 # Create Edition
-$r = Invoke-Api "$CatalogUrl/api/editions" "POST" @{
+$r = Invoke-Api "$BaseUrl/api/editions" "POST" @{
     workId = $workId
     narratorTeamName = "E2E Narrator Team"
     language = "en"
@@ -177,7 +184,7 @@ Assert-Status $r 201 "Create edition"
 $editionId = (Get-ResponseBody $r).id
 
 # Create Part
-$r = Invoke-Api "$CatalogUrl/api/parts" "POST" @{
+$r = Invoke-Api "$BaseUrl/api/parts" "POST" @{
     editionId = $editionId
     title = "Chapter 1 - The Beginning"
     orderMajor = 1
@@ -228,7 +235,7 @@ if ($AudioFilePath -and (Test-Path $AudioFilePath)) {
     $r = Invoke-Api "$BaseUrl/api/media/$assetId/part" "PATCH" @{ partId = $partId } $creatorToken
     Assert-Status $r 200 "Link asset to part"
 
-    $r = Invoke-Api "$CatalogUrl/api/parts/$partId/assets" "POST" @{
+    $r = Invoke-Api "$BaseUrl/api/parts/$partId/assets" "POST" @{
         mediaAssetId = $assetId; sequenceOrder = 1
     } $creatorToken
     Assert-Status $r 201 "Link asset in catalog"
@@ -239,10 +246,10 @@ if ($AudioFilePath -and (Test-Path $AudioFilePath)) {
 ## PHASE 9: Publish Work
 Write-Step "Phase 9: Publish Work"
 
-$r = Invoke-Api "$CatalogUrl/api/works/$workId/publish" "POST" $null $adminToken
+$r = Invoke-Api "$BaseUrl/api/works/$workId/publish" "POST" $null $adminToken
 Assert-Status $r 200 "Publish work"
 
-$r = Invoke-Api "$CatalogUrl/api/parts/$partId/publish" "POST" $null $creatorToken
+$r = Invoke-Api "$BaseUrl/api/parts/$partId/publish" "POST" $null $creatorToken
 Assert-Status $r 200 "Publish part"
 
 ## PHASE 10: Library & Reviews
@@ -255,7 +262,7 @@ $r = Invoke-Api "$BaseUrl/api/library" "POST" @{
 Assert-Status $r 201 "Add work to library"
 
 # Rate the work
-$r = Invoke-Api "$LibraryUrl/api/library/$workId/rating" "PUT" @{ rating = 8 } $listenerToken
+$r = Invoke-Api "$BaseUrl/api/library/$workId/rating" "PUT" @{ rating = 8 } $listenerToken
 Assert-Status $r 200 "Rate work (8/10)"
 
 # Write review
@@ -299,6 +306,8 @@ Assert-Status $r 201 "Follow author"
 
 ## PHASE 12: Search
 Write-Step "Phase 12: Search"
+
+Write-Host "  [INFO] Search requires Elasticsearch: docker compose -f infra/docker-compose.yml --profile search up -d" -ForegroundColor Yellow
 
 Start-Sleep -Seconds 2
 $r = Invoke-Api "$BaseUrl/api/search/works?q=E2E" "GET" $null $listenerToken
