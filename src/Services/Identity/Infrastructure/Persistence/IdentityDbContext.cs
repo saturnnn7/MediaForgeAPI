@@ -13,6 +13,9 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
     public DbSet<Channel> Channels => Set<Channel>();
     public DbSet<ChannelSubscription> Subscriptions => Set<ChannelSubscription>();
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+    public DbSet<AuthorFollow> AuthorFollows => Set<AuthorFollow>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

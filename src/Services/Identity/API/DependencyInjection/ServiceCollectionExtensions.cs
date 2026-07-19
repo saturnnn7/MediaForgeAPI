@@ -114,6 +114,9 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
         services.AddScoped<IChannelRepository, ChannelRepository>();
+        services.AddScoped<IFriendshipRepository, FriendshipRepository>();
+        services.AddScoped<IAuthorFollowRepository, AuthorFollowRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IIdentityUnitOfWork>(sp => sp.GetRequiredService<IdentityDbContext>());
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();

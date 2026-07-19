@@ -42,6 +42,9 @@ app.MapGrpcService<UserGrpcService>();
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
 app.MapChannelEndpoints();
+app.MapFriendEndpoints();
+app.MapAuthorFollowEndpoints();
+app.MapNotificationEndpoints();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
