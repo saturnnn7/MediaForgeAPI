@@ -277,23 +277,23 @@ if (-not $partId) {
     $assetId = $uploadData.assetId
     $uploadUrl = $uploadData.uploadUrl
 
-    # Upload to MinIO using curl.exe (available on Windows 10+)
-    # (Invoke-WebRequest and System.Net.Http both mangle/are unavailable for presigned URLs
-    # containing + and % in the signature under PowerShell 5.1)
+    # Upload to MinIO using WebClient - it sends minimal headers by default, unlike
+    # curl.exe (adds User-Agent/Accept) or Invoke-WebRequest, which MinIO's presigned
+    # URL signature validation rejects with 403 SignatureDoesNotMatch
     if (-not $uploadUrl) {
         Write-Fail "Upload URL is empty - skipping upload"
     } else {
-        $curlResult = & curl.exe -s -o NUL -w "%{http_code}" `
-            -X PUT `
-            --data-binary "@$AudioFilePath" `
-            "$uploadUrl"
-
-        if ($curlResult -eq "200") {
+        $webClient = New-Object System.Net.WebClient
+        try {
+            $webClient.UploadFile($uploadUrl, "PUT", $AudioFilePath)
             Write-Pass "Upload file to MinIO (HTTP 200)"
             $uploadSuccess = $true
-        } else {
-            Write-Fail "Upload file to MinIO (Expected 200, got $curlResult)"
+        } catch [System.Net.WebException] {
+            $statusCode = [int]$_.Exception.Response.StatusCode
+            Write-Fail "Upload file to MinIO (Expected 200, got $statusCode)"
             $uploadSuccess = $false
+        } finally {
+            $webClient.Dispose()
         }
     }
 
