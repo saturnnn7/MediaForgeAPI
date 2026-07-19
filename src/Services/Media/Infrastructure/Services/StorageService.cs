@@ -100,4 +100,7 @@ public sealed class StorageService(IAmazonS3 s3Client) : IStorageService
             Key = objectKey,
             UploadId = uploadId
         }, ct);
+
+    public Task<string> GenerateImageUploadUrlAsync(string objectKey, CancellationToken ct)
+        => GenerateUploadUrlAsync("mediaforge-images", objectKey, "application/octet-stream", TimeSpan.FromMinutes(15), ct);
 }

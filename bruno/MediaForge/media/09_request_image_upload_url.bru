@@ -1,0 +1,30 @@
+meta {
+  name: Request Image Upload URL
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/media/images/upload-url
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "category": "persons",
+    "fileName": "avatar.jpg",
+    "contentType": "image/jpeg"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("imageUploadUrl", res.body.uploadUrl);
+    bru.setVar("imageUrl", res.body.imageUrl);
+  }
+}

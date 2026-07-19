@@ -12,4 +12,5 @@ public interface IStorageService
     Task<string> GeneratePartUploadUrlAsync(string bucketName, string objectKey, string uploadId, int partNumber, CancellationToken ct);
     Task<string> CompleteMultipartUploadAsync(string bucketName, string objectKey, string uploadId, IReadOnlyList<CompletedPartDto> parts, CancellationToken ct);
     Task AbortMultipartUploadAsync(string bucketName, string objectKey, string uploadId, CancellationToken ct);
+    Task<string> GenerateImageUploadUrlAsync(string objectKey, CancellationToken ct);
 }

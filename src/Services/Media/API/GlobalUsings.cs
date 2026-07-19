@@ -2,6 +2,7 @@ global using Microsoft.AspNetCore.Builder;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Configuration;
 global using MediaForge.Media.Application.Commands.RequestUploadUrl;
+global using MediaForge.Media.Application.Commands.RequestImageUploadUrl;
 global using MediaForge.Media.Application.Commands.ConfirmUpload;
 global using MediaForge.Media.Application.Queries.GetMediaAsset;
 global using MediaForge.Media.Application.Queries.GetUserMediaAssets;

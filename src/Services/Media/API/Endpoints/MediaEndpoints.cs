@@ -114,6 +114,14 @@ public static class MediaEndpoints
             return ToHttpResult(result);
         });
 
+        group.MapPost("/images/upload-url", async (RequestImageUploadUrlCommand command, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(command, ct);
+            return result.IsSuccess
+                ? Results.Created(result.Value.ImageUrl, result.Value)
+                : ToHttpResult(result);
+        });
+
         return app;
     }
 

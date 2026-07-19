@@ -7,7 +7,7 @@ namespace MediaForge.Media.Infrastructure.Services;
 
 public sealed class MinioInitializer(IAmazonS3 s3, ILogger<MinioInitializer> logger) : IHostedService
 {
-    private static readonly string[] Buckets = ["mediaforge-media", "mediaforge-processed"];
+    private static readonly string[] Buckets = ["mediaforge-media", "mediaforge-processed", "mediaforge-images"];
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -26,7 +26,7 @@ public sealed class MinioInitializer(IAmazonS3 s3, ILogger<MinioInitializer> log
                     logger.LogInformation("MinIO bucket already exists: {Bucket}", bucket);
                 }
 
-                if (bucket == "mediaforge-processed")
+                if (bucket is "mediaforge-processed" or "mediaforge-images")
                 {
                     logger.LogInformation("Applying public read policy to bucket: {Bucket}", bucket);
                     try
@@ -34,14 +34,14 @@ public sealed class MinioInitializer(IAmazonS3 s3, ILogger<MinioInitializer> log
                         await s3.PutBucketPolicyAsync(new PutBucketPolicyRequest
                         {
                             BucketName = bucket,
-                            Policy = """
+                            Policy = $$"""
                             {
                               "Version": "2012-10-17",
                               "Statement": [{
                                 "Effect": "Allow",
                                 "Principal": {"AWS": ["*"]},
                                 "Action": ["s3:GetObject"],
-                                "Resource": ["arn:aws:s3:::mediaforge-processed/*"]
+                                "Resource": ["arn:aws:s3:::{{bucket}}/*"]
                               }]
                             }
                             """
