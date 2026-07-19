@@ -16,7 +16,7 @@ public sealed class SetPartPrivacyCommandHandler(
         if (work is null)
             return Result.Failure(Error.NotFound("Work", part.WorkId));
 
-        if (work.ChannelId != currentUserService.UserId)
+        if (work.CreatorId != currentUserService.UserId)
             return Result.Failure(Error.Unauthorized("Only the channel owner can change this part's privacy."));
 
         if (request.IsPrivate)

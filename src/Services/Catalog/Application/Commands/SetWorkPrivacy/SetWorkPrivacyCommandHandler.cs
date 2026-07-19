@@ -11,7 +11,7 @@ public sealed class SetWorkPrivacyCommandHandler(
         if (work is null)
             return Result.Failure(Error.NotFound("Work", request.WorkId));
 
-        if (work.ChannelId != currentUserService.UserId)
+        if (work.CreatorId != currentUserService.UserId)
             return Result.Failure(Error.Unauthorized("Only the channel owner can change this work's privacy."));
 
         if (request.IsPrivate)
