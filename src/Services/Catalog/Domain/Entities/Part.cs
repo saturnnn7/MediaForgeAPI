@@ -20,6 +20,7 @@ public sealed class Part : AggregateRoot
     public string? CoverUrl { get; private set; }
     public double? DurationSeconds { get; private set; }
     public bool IsPublished { get; private set; }
+    public bool IsPrivate { get; private set; }
     public DateTime CreatedAt { get; init; }
 
     public IReadOnlyList<PartChapter> Chapters => _chapters.AsReadOnly();
@@ -62,6 +63,10 @@ public sealed class Part : AggregateRoot
     public void Publish() => IsPublished = true;
 
     public void Unpublish() => IsPublished = false;
+
+    public void MakePrivate() => IsPrivate = true;
+
+    public void MakePublic() => IsPrivate = false;
 
     public Result<PartChapter> AddChapter(string title, double startTimeSeconds, double endTimeSeconds, int order)
     {

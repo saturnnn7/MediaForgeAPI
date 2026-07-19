@@ -12,6 +12,7 @@ public static class WorkMapper
             work.CoverUrl,
             work.Language,
             work.IsPublished,
+            work.IsPrivate,
             work.CreatedAt);
 
     public static WorkDetailDto ToDetailDto(
@@ -28,6 +29,7 @@ public static class WorkMapper
             work.CoverUrl,
             work.Language,
             work.IsPublished,
+            work.IsPrivate,
             work.PublishedAt,
             work.CreatedAt,
             contributors,

@@ -50,6 +50,10 @@ public sealed class PartConfiguration : IEntityTypeConfiguration<Part>
             .HasColumnName("is_published")
             .HasDefaultValue(false);
 
+        builder.Property(x => x.IsPrivate)
+            .HasColumnName("is_private")
+            .HasDefaultValue(false);
+
         builder.Property(x => x.CreatedAt)
             .HasColumnName("created_at");
 

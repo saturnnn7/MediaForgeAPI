@@ -10,6 +10,7 @@ public sealed record WorkDetailDto(
     string? CoverUrl,
     string? Language,
     bool IsPublished,
+    bool IsPrivate,
     DateTime? PublishedAt,
     DateTime CreatedAt,
     IReadOnlyList<ContributorDto> Contributors,

@@ -4,6 +4,7 @@ using MediaForge.Catalog.Application.Commands.CreateWork;
 using MediaForge.Catalog.Application.Commands.PublishWork;
 using MediaForge.Catalog.Application.Commands.RemoveContributor;
 using MediaForge.Catalog.Application.Commands.RemoveGenreFromWork;
+using MediaForge.Catalog.Application.Commands.SetWorkPrivacy;
 using MediaForge.Catalog.Application.Commands.UnpublishWork;
 using MediaForge.Catalog.Application.Commands.UpdateWork;
 using MediaForge.Catalog.Application.Queries.GetChannelWorks;
@@ -62,6 +63,12 @@ public static class WorkEndpoints
             return EndpointResults.ToHttpResult(result);
         }).RequireAuthorization();
 
+        app.MapPatch("/api/works/{workId:guid}/privacy", async (Guid workId, SetPrivacyRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new SetWorkPrivacyCommand(workId, request.IsPrivate), ct);
+            return EndpointResults.ToHttpResult(result);
+        }).RequireAuthorization();
+
         app.MapPost("/api/works/{workId:guid}/contributors", async (Guid workId, AddContributorRequest request, ISender sender, CancellationToken ct) =>
         {
             var command = new AddContributorCommand(workId, request.PersonId, request.Role, request.DisplayOrder);
@@ -93,4 +100,6 @@ public static class WorkEndpoints
     private sealed record UpdateWorkRequest(string Title, string? Description, string? CoverUrl, string? Language);
 
     private sealed record AddContributorRequest(Guid PersonId, ContributorRole Role, int DisplayOrder = 0);
+
+    private sealed record SetPrivacyRequest(bool IsPrivate);
 }

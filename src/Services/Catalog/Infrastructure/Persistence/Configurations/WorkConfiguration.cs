@@ -52,6 +52,10 @@ public sealed class WorkConfiguration : IEntityTypeConfiguration<Work>
             .HasColumnName("is_published")
             .HasDefaultValue(false);
 
+        builder.Property(x => x.IsPrivate)
+            .HasColumnName("is_private")
+            .HasDefaultValue(false);
+
         builder.Property(x => x.CreatedAt)
             .HasColumnName("created_at");
 

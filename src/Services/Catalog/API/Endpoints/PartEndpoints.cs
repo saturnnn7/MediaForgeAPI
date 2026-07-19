@@ -2,6 +2,7 @@ using MediaForge.Catalog.Application.Commands.AddChapterToPart;
 using MediaForge.Catalog.Application.Commands.CreatePart;
 using MediaForge.Catalog.Application.Commands.LinkAssetToPart;
 using MediaForge.Catalog.Application.Commands.RemoveChapterFromPart;
+using MediaForge.Catalog.Application.Commands.SetPartPrivacy;
 using MediaForge.Catalog.Application.Commands.UnlinkAssetFromPart;
 using MediaForge.Catalog.Application.Commands.UpdatePart;
 using MediaForge.Catalog.Application.Queries.GetPart;
@@ -42,6 +43,12 @@ public static class PartEndpoints
             return EndpointResults.ToHttpResult(result);
         }).RequireAuthorization();
 
+        app.MapPatch("/api/parts/{partId:guid}/privacy", async (Guid partId, SetPrivacyRequest request, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new SetPartPrivacyCommand(partId, request.IsPrivate), ct);
+            return EndpointResults.ToHttpResult(result);
+        }).RequireAuthorization();
+
         app.MapPost("/api/parts/{partId:guid}/chapters", async (Guid partId, AddChapterRequest request, ISender sender, CancellationToken ct) =>
         {
             var command = new AddChapterToPartCommand(partId, request.Title, request.StartTimeSeconds, request.EndTimeSeconds, request.Order);
@@ -78,6 +85,8 @@ public static class PartEndpoints
     private sealed record CreatePartRequest(Guid WorkId, string Title, string? Description, int OrderMajor, int OrderMinor, PartType PartType, string? CoverUrl);
 
     private sealed record UpdatePartRequest(string Title, string? Description, string? CoverUrl);
+
+    private sealed record SetPrivacyRequest(bool IsPrivate);
 
     private sealed record AddChapterRequest(string Title, double StartTimeSeconds, double EndTimeSeconds, int Order);
 

@@ -9,4 +9,5 @@ public sealed record WorkSummaryDto(
     string? CoverUrl,
     string? Language,
     bool IsPublished,
+    bool IsPrivate,
     DateTime CreatedAt);

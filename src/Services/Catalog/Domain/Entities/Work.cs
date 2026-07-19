@@ -21,6 +21,7 @@ public sealed class Work : AggregateRoot
     public string? Language { get; private set; }
     public DateTime? PublishedAt { get; private set; }
     public bool IsPublished { get; private set; }
+    public bool IsPrivate { get; private set; }
     public DateTime CreatedAt { get; init; }
 
     public IReadOnlyList<WorkContributor> Contributors => _contributors.AsReadOnly();
@@ -75,6 +76,10 @@ public sealed class Work : AggregateRoot
         IsPublished = false;
         PublishedAt = null;
     }
+
+    public void MakePrivate() => IsPrivate = true;
+
+    public void MakePublic() => IsPrivate = false;
 
     public void AssignToSeries(Guid seriesId) => SeriesId = seriesId;
 

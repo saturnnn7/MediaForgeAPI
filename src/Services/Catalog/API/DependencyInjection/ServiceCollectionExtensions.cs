@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using FluentValidation;
+using MediaForge.Catalog.API.Services;
+using MediaForge.Catalog.Application.Abstractions;
 using MediaForge.Catalog.Application.Commands.CreatePerson;
 using MediaForge.Catalog.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -32,6 +34,9 @@ public static class ServiceCollectionExtensions
                 opts.MapInboundClaims = false;
             });
         services.AddAuthorization();
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         services.AddValidatorsFromAssembly(typeof(CreatePersonCommand).Assembly);
 

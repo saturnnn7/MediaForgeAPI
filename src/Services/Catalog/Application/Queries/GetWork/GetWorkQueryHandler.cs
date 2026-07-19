@@ -4,13 +4,20 @@ namespace MediaForge.Catalog.Application.Queries.GetWork;
 
 public sealed class GetWorkQueryHandler(
     IWorkRepository workRepository,
-    IGenreRepository genreRepository) : IRequestHandler<GetWorkQuery, Result<WorkDetailDto>>
+    IGenreRepository genreRepository,
+    ICurrentUserService currentUserService) : IRequestHandler<GetWorkQuery, Result<WorkDetailDto>>
 {
     public async Task<Result<WorkDetailDto>> Handle(GetWorkQuery request, CancellationToken cancellationToken)
     {
         var work = await workRepository.GetByIdWithDetailsAsync(request.WorkId, cancellationToken);
         if (work is null)
             return Result.Failure<WorkDetailDto>(Error.NotFound("Work", request.WorkId));
+
+        if (work.IsPrivate
+            && !(currentUserService.IsAuthenticated && currentUserService.UserId == work.ChannelId))
+        {
+            return Result.Failure<WorkDetailDto>(Error.Unauthorized("This content is private."));
+        }
 
         var contributorRows = await workRepository.GetContributorsWithPersonsAsync(request.WorkId, cancellationToken);
         var contributors = contributorRows
