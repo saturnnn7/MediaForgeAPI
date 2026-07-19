@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Threading.RateLimiting;
 using MediaForge.Gateway.YARP.Consumers;
 using MediaForge.Gateway.YARP.Hubs;
 using MediaForge.Shared.Infrastructure.HealthChecks;
@@ -38,24 +39,68 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
-// Rate limiting (built-in .NET 8)
+// Rate limiting (built-in .NET 8) - partitioned by user tier when authenticated, else by IP
 builder.Services.AddRateLimiter(opts =>
 {
-    opts.AddFixedWindowLimiter("general", o =>
+    opts.AddPolicy("general", httpContext =>
     {
-        o.PermitLimit = 100;
-        o.Window = TimeSpan.FromMinutes(1);
-        o.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-        o.QueueLimit = 10;
+        var userId = httpContext.User?.FindFirst("sub")?.Value;
+        var role = httpContext.User?.FindFirst("role")?.Value ?? "anonymous";
+
+        int permitLimit = role switch
+        {
+            "admin" => 1000,
+            "creator" => 200,
+            "listener" => 60,
+            _ => 30
+        };
+
+        var partitionKey = userId ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 5
+            });
     });
-    opts.AddFixedWindowLimiter("upload", o =>
+
+    opts.AddPolicy("upload", httpContext =>
     {
-        o.PermitLimit = 10;
-        o.Window = TimeSpan.FromMinutes(1);
-        o.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-        o.QueueLimit = 2;
+        var role = httpContext.User?.FindFirst("role")?.Value ?? "anonymous";
+        var userId = httpContext.User?.FindFirst("sub")?.Value;
+
+        int permitLimit = role switch
+        {
+            "admin" => 100,
+            "creator" => 20,
+            _ => 0
+        };
+
+        var partitionKey = userId ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter($"upload:{partitionKey}", _ =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 2
+            });
     });
+
     opts.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    opts.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync(
+            "{\"error\":\"Rate limit exceeded. Please slow down.\",\"retryAfter\":60}",
+            cancellationToken);
+    };
 });
 
 // SignalR with Redis backplane
