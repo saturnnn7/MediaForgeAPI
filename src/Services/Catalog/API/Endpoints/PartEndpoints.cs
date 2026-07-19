@@ -1,9 +1,11 @@
 using MediaForge.Catalog.Application.Commands.AddChapterToPart;
 using MediaForge.Catalog.Application.Commands.CreatePart;
 using MediaForge.Catalog.Application.Commands.LinkAssetToPart;
+using MediaForge.Catalog.Application.Commands.PublishPart;
 using MediaForge.Catalog.Application.Commands.RemoveChapterFromPart;
 using MediaForge.Catalog.Application.Commands.SetPartPrivacy;
 using MediaForge.Catalog.Application.Commands.UnlinkAssetFromPart;
+using MediaForge.Catalog.Application.Commands.UnpublishPart;
 using MediaForge.Catalog.Application.Commands.UpdatePart;
 using MediaForge.Catalog.Application.Queries.GetPart;
 using MediaForge.Catalog.Application.Queries.GetWorkParts;
@@ -46,6 +48,18 @@ public static class PartEndpoints
         app.MapPatch("/api/parts/{partId:guid}/privacy", async (Guid partId, SetPrivacyRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new SetPartPrivacyCommand(partId, request.IsPrivate), ct);
+            return EndpointResults.ToHttpResult(result);
+        }).RequireAuthorization();
+
+        app.MapPost("/api/parts/{partId:guid}/publish", async (Guid partId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new PublishPartCommand(partId), ct);
+            return EndpointResults.ToHttpResult(result);
+        }).RequireAuthorization();
+
+        app.MapPost("/api/parts/{partId:guid}/unpublish", async (Guid partId, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new UnpublishPartCommand(partId), ct);
             return EndpointResults.ToHttpResult(result);
         }).RequireAuthorization();
 
