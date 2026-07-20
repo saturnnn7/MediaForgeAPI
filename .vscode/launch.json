@@ -1,0 +1,83 @@
+{
+  "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "MediaForge: All Services",
+      "configurations": [
+        "Identity.API",
+        "Media.API",
+        "Processing.Worker",
+        "Search.API",
+        "Gateway.YARP",
+        "Catalog.API",
+        "Library.API"
+      ],
+      "stopAll": true
+    }
+  ],
+  "configurations": [
+    {
+      "name": "Identity.API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Services/Identity/API/bin/Debug/net8.0/MediaForge.Identity.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Services/Identity/API",
+      "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    },
+    {
+      "name": "Media.API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Services/Media/API/bin/Debug/net8.0/MediaForge.Media.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Services/Media/API",
+      "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    },
+    {
+      "name": "Processing.Worker",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Services/Processing/Worker/bin/Debug/net8.0/MediaForge.Processing.Worker.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Services/Processing/Worker",
+      "env": { "DOTNET_ENVIRONMENT": "Development" }
+    },
+    {
+      "name": "Search.API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Services/Search/API/bin/Debug/net8.0/MediaForge.Search.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Services/Search/API",
+      "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    },
+    {
+      "name": "Gateway.YARP",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Services/Gateway/bin/Debug/net8.0/MediaForge.Gateway.YARP.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Services/Gateway",
+      "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    },
+    {
+      "name": "Catalog.API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Services/Catalog/API/bin/Debug/net8.0/MediaForge.Catalog.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Services/Catalog/API",
+      "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    },
+    {
+      "name": "Library.API",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/Services/Library/API/bin/Debug/net8.0/MediaForge.Library.API.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/Services/Library/API",
+      "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  ]
+}
