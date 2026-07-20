@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/saturnnn7/MediaForgeAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/saturnnn7/MediaForgeAPI/actions/workflows/ci.yml)
 
-**Kyrylo Soprykin** — [LinkedIn](https://www.linkedin.com/in/kyrylo-soprykin/) | [GitHub](https://github.com/saturnnn7)
+**Kyrylo Soprykin** - [LinkedIn](https://www.linkedin.com/in/kyrylo-soprykin/) | [GitHub](https://github.com/saturnnn7)
 
 > Production-oriented audiobook and podcast SaaS platform built with microservices architecture.
 > Users upload audio/video content, the system transcodes, transcribes, indexes, and delivers
@@ -43,10 +43,10 @@ graph TD
 
 ## Testing the API
 
-**Bruno collection** (`bruno/`) — ready-to-use HTTP request collection covering all flows.
+**Bruno collection** (`bruno/`) - ready-to-use HTTP request collection covering all flows.
 Open Bruno → Open Collection → select `bruno/MediaForge/` → set Environment to `local`.
 
-**E2E test script** — automated full pipeline test:
+**E2E test script** - automated full pipeline test:
 
 ```powershell
 .\scripts\e2e-test.ps1 -AudioFilePath "path\to\audio.mp3"
